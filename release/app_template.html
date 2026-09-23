@@ -1,0 +1,1709 @@
+<title>电磁离合器仿真台</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f6f4ef;
+  --surface:#ffffff;
+  --surface-2:#edeae1;
+  --border:#dcd6c8;
+  --ink:#211f1a;
+  --muted:#716c60;
+  --accent:#c07830;
+  --accent-ink:#5c380f;
+  --accent-soft:#f1e0c7;
+  --sim:#c07830;
+  --measured:#2f6488;
+  --measured-soft:#dce8ef;
+  --good:#3f7d4a;
+  --good-soft:#e2efe2;
+  --bad:#b3432b;
+  --bad-soft:#f6e2dc;
+  --warn:#a9791f;
+  --warn-soft:#f2e7d0;
+  --cat-purple:#534AB7;
+  --cat-teal:#0F6E56;
+  --cat-coral:#D85A30;
+  --cat-pink:#993556;
+  --grid:#e3ddd0;
+  --shadow:0 1px 2px rgba(30,25,15,.06),0 6px 20px -8px rgba(30,25,15,.15);
+  --radius:10px;
+  --font-display:'IBM Plex Sans',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15181b;
+    --surface:#1d2125;
+    --surface-2:#22262a;
+    --border:#31363b;
+    --ink:#eae7de;
+    --muted:#9b968a;
+    --accent:#e39a52;
+    --accent-ink:#2c1706;
+    --accent-soft:#3a2a16;
+    --sim:#e39a52;
+    --measured:#78b0da;
+    --measured-soft:#1e2c36;
+    --good:#6ec27c;
+    --good-soft:#1c2c1e;
+    --bad:#e5806a;
+    --bad-soft:#332019;
+    --warn:#d7ab5c;
+    --warn-soft:#332a16;
+    --cat-purple:#AFA9EC;
+    --cat-teal:#5DCAA5;
+    --cat-coral:#F0997B;
+    --cat-pink:#ED93B1;
+    --grid:#2a2e32;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -10px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15181b;
+  --surface:#1d2125;
+  --surface-2:#22262a;
+  --border:#31363b;
+  --ink:#eae7de;
+  --muted:#9b968a;
+  --accent:#e39a52;
+  --accent-ink:#2c1706;
+  --accent-soft:#3a2a16;
+  --sim:#e39a52;
+  --measured:#78b0da;
+  --measured-soft:#1e2c36;
+  --good:#6ec27c;
+  --good-soft:#1c2c1e;
+  --bad:#e5806a;
+  --bad-soft:#332019;
+  --warn:#d7ab5c;
+  --warn-soft:#332a16;
+  --cat-purple:#AFA9EC;
+  --cat-teal:#5DCAA5;
+  --cat-coral:#F0997B;
+  --cat-pink:#ED93B1;
+  --grid:#2a2e32;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -10px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:14px;
+  line-height:1.55;
+  padding:0 20px;
+}
+.wrap{max-width:1320px;margin:0 auto;padding-block:24px 60px;}
+.top{
+  display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;justify-content:space-between;
+  margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);
+}
+.top h1{
+  font-family:var(--font-display);font-size:22px;font-weight:600;margin:0;
+  text-wrap:balance;letter-spacing:-.01em;
+}
+.top .sub{color:var(--muted);font-size:13px;max-width:60ch;}
+.tag{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;
+  background:var(--accent-soft);color:var(--accent-ink);padding:3px 8px;border-radius:5px;
+  border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.layout{display:grid;grid-template-columns:290px 1fr;gap:20px;align-items:start;}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{position:static;}
+}
+
+.panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+.sidebar{position:sticky;top:16px;display:flex;flex-direction:column;gap:14px;}
+.pgroup{padding:14px 16px 16px;}
+.pgroup h2{
+  font-family:var(--font-display);font-size:12px;font-weight:600;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 12px;
+  display:flex;align-items:center;gap:6px;
+}
+.pgroup h2 .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+.field-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;}
+.field-head label{font-size:12.5px;color:var(--ink);}
+.field-head .val{
+  font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12.5px;
+  color:var(--accent-ink);background:var(--accent-soft);padding:1px 6px;border-radius:4px;
+  min-width:56px;text-align:right;
+}
+input[type=range]{
+  width:100%;accent-color:var(--accent);height:18px;cursor:pointer;background:transparent;
+}
+.field .hint{font-size:11px;color:var(--muted);margin-top:2px;}
+.btn{
+  font-family:var(--font-body);font-size:12.5px;font-weight:600;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--ink);border-radius:7px;padding:8px 12px;cursor:pointer;
+  width:100%;transition:background .15s, border-color .15s;
+}
+.btn:hover{border-color:var(--accent);}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;}
+.btn.primary:hover{filter:brightness(1.05);}
+
+.main{display:flex;flex-direction:column;gap:18px;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.stat{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 14px;box-shadow:var(--shadow);
+}
+.stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.stat .v{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600;margin-top:3px;}
+.stat .v small{font-size:12px;font-weight:400;color:var(--muted);}
+.stat.badge-good{border-color:color-mix(in srgb, var(--good) 45%, var(--border));}
+.stat.badge-bad{border-color:color-mix(in srgb, var(--bad) 45%, var(--border));}
+
+.card{padding:16px 18px 18px;}
+.card h3{
+  font-family:var(--font-display);font-size:15px;font-weight:600;margin:0 0 2px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+.card .desc{font-size:12.5px;color:var(--muted);line-height:1.6;margin:0 0 12px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+.legend span{display:inline-flex;align-items:center;gap:5px;}
+.swatch{width:14px;height:3px;border-radius:2px;display:inline-block;}
+.swatch.dash{background:none;border-top:3px dashed currentColor;height:0;width:16px;}
+canvas{width:100%;display:block;}
+.chart-box{position:relative;}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead th{
+  text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;
+  letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+tbody td{padding:6px 8px;border-bottom:1px solid var(--grid);font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap;}
+tbody td.name{font-family:var(--font-body);}
+tbody tr:last-child td{border-bottom:none;}
+.pill{
+  display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;font-weight:600;
+}
+.pill.good{background:var(--good-soft);color:var(--good);}
+.pill.warn{background:var(--warn-soft);color:var(--warn);}
+.pill.bad{background:var(--bad-soft);color:var(--bad);}
+.table-scroll{overflow-x:auto;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media (max-width:700px){.two-col{grid-template-columns:1fr;}}
+.note{
+  font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;margin-top:10px;
+}
+.arch-line{
+  font-family:var(--font-mono);font-size:12px;color:var(--measured);background:var(--measured-soft);
+  border-radius:8px;padding:8px 12px;display:inline-block;margin-top:8px;
+}
+.anim-card{margin-bottom:20px;}
+.anim-controls{display:flex;gap:8px;}
+.anim-inputs{display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;margin:4px 0 10px;}
+@media (max-width:700px){.anim-inputs{grid-template-columns:1fr;}}
+.anim-inputs .field{margin-bottom:0;}
+.anim-inputs input[disabled]{opacity:.45;cursor:not-allowed;}
+.anim-modes{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:center;margin:0 0 8px;font-size:12.5px;}
+.mode-group{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;}
+.mode-group .mode-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.mode-group label{display:inline-flex;align-items:center;gap:4px;cursor:pointer;}
+.mode-group input[type=radio]{accent-color:var(--accent);margin:0;}
+.flow-legend{font-size:12px;color:var(--muted);}
+.flow-legend span{display:inline-flex;align-items:center;gap:5px;}
+.anim-curve-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:13px;font-weight:600;margin:14px 0 6px;
+}
+.btn.anim-btn{width:auto;padding:5px 14px;font-size:12px;}
+.btn.anim-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.btn.anim-btn.active:hover{filter:brightness(1.15);}
+.anim-status{
+  font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;
+  color:var(--muted);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;margin-top:10px;
+}
+.anim-status b{color:var(--ink);}
+.anim-status{display:flex;flex-wrap:wrap;gap:4px 18px;contain:layout;}
+.st-item{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap;}
+.st-k{color:var(--muted);}
+.st-v{display:inline-block;text-align:right;font-variant-numeric:tabular-nums;}
+.st-phase{min-width:13.5em;text-align:left;}
+.legend-marks{margin:2px 0 8px;}
+.mk{display:inline-block;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--muted);}
+.mk-solid{background:var(--muted);}
+.mk-hollow{background:transparent;}
+.chart-box{contain:layout paint;}
+html{scrollbar-gutter:stable;}
+::selection{background:var(--accent-soft);}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>电磁离合器仿真台 <span class="tag" style="font-size:11px;vertical-align:2px;">{{VERSION}}</span></h1>
+      <div class="sub">单档DHT P1+P3架构 · 台架数据标定 · 预测实车结合响应时间</div>
+    </div>
+  </div>
+
+  <div class="panel card anim-card">
+    <h3>电磁离合器结合／分离动态过程
+      <span class="anim-controls">
+        <button class="btn anim-btn" id="animEngageBtn">▶ 结合</button>
+        <button class="btn anim-btn" id="animReleaseBtn">◼ 分离</button>
+        <button class="btn anim-btn" id="animResetBtn">↺ 复位</button>
+      </span>
+    </h3>
+    <p class="desc">结合前可分别设定ISG与TM的转速（速差Δω = |n_TM − n_ISG|）。点击"结合"后依次进入 <b>调速阶段</b>（ISG向TM转速靠拢，历时t₁）→ <b>闭合阶段</b>（线圈通电、气隙闭合、扭矩建立，历时t₂）→ <b>Engaged</b>（两侧锁止同速）；t₁、t₂ 由台架测试数据回归公式计算，完整结合时间 = t₁ + t₂。</p>
+    <div class="anim-inputs">
+      <div class="field">
+        <div class="field-head"><label for="isg_vehicle">结合前 ISG 转速</label><span class="val" id="isg_vehicle_v"></span></div>
+        <input type="range" id="isg_vehicle" min="0" max="8000" step="50" value="0">
+        <div class="hint">rpm · P1/ISG侧</div>
+      </div>
+      <div class="field">
+        <div class="field-head"><label for="tm_vehicle">结合前 TM 转速</label><span class="val" id="tm_vehicle_v"></span></div>
+        <input type="range" id="tm_vehicle" min="0" max="10000" step="50" value="3000">
+        <div class="hint">rpm · P3/TM输出侧</div>
+      </div>
+    </div>
+    <div class="anim-modes">
+      <div class="mode-group">
+        <span class="mode-label">分离状态工作模式</span>
+        <label><input type="radio" name="modeRel" value="ev" checked> 纯电驱动</label>
+        <label><input type="radio" name="modeRel" value="rex"> 增程发电</label>
+      </div>
+      <div class="mode-group">
+        <span class="mode-label">结合状态工作模式</span>
+        <label><input type="radio" name="modeEng" value="parallel" checked> 发动机直驱+电机助力</label>
+        <label><input type="radio" name="modeEng" value="regen"> 制动能量回收</label>
+      </div>
+      <div class="mode-group flow-legend">
+        <span><span class="swatch" style="background:var(--cat-teal);height:4px"></span>动力输出流（机械）</span>
+        <span><span class="swatch dash" style="color:var(--warn)"></span>能量输出流（电，放电）</span>
+        <span><span class="swatch dash" style="color:var(--cat-purple)"></span>能量反馈流（电，充电）</span>
+      </div>
+    </div>
+    <div class="note" id="canvasLostNote" style="display:none">图形上下文被浏览器释放（常见于显卡驱动复位或休眠唤醒），正在尝试自动恢复；若长时间无显示，请刷新页面或在 Chrome 设置中关闭"使用硬件加速模式"。</div>
+    <div class="chart-box"><canvas id="animCanvas" height="370"></canvas></div>
+    <div class="anim-status" id="animStatus">
+      <span class="st-item"><span class="st-k">当前阶段</span><b class="st-v st-phase" id="stPhase"></b></span>
+      <span class="st-item"><span class="st-k">已用时</span><b class="st-v" id="stElapsed" style="min-width:7ch"></b></span>
+      <span class="st-item"><span class="st-k">调速时间 t₁</span><b class="st-v" id="stT1" style="min-width:7ch"></b></span>
+      <span class="st-item"><span class="st-k">闭合时间 t₂</span><b class="st-v" id="stT2" style="min-width:7ch"></b></span>
+      <span class="st-item"><span class="st-k">完整结合时间</span><b class="st-v" id="stTot" style="min-width:7ch"></b></span>
+      <span class="st-item"><span class="st-k">n_ISG</span><b class="st-v" id="stIsg" style="min-width:9ch"></b></span>
+      <span class="st-item"><span class="st-k">n_TM</span><b class="st-v" id="stTm" style="min-width:9ch"></b></span>
+      <span class="st-item"><span class="st-k">Δω</span><b class="st-v" id="stD" style="min-width:9ch"></b></span>
+      <span class="st-item"><span class="st-k">SOC</span><b class="st-v" id="stSoc" style="min-width:7ch"></b></span>
+    </div>
+    <div class="anim-curve-head">
+      <span>结合过程曲线（横轴：时间 ms）</span>
+      <span class="legend">
+        <span><span class="swatch" style="background:var(--measured)"></span>速差 Δω (rpm，左轴)</span>
+        <span><span class="swatch" style="background:var(--accent)"></span>结合度 (%，右轴)</span>
+      </span>
+    </div>
+    <div class="chart-box"><canvas id="animCurveCanvas" height="230"></canvas></div>
+  </div>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="panel pgroup">
+        <h2><span class="dot"></span>惯量与扭矩（台架/设计公式）</h2>
+        <div class="field">
+          <div class="field-head"><label for="J_isg">ISG(P1)转动惯量 J_isg</label><span class="val" id="J_isg_v"></span></div>
+          <input type="range" id="J_isg" min="0.005" max="0.05" step="0.001" value="0.017">
+          <div class="hint">kg·m² · 台架标定基准 0.017</div>
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="J_bench">TM(台架/输出侧)惯量 J_bench</label><span class="val" id="J_bench_v"></span></div>
+          <input type="range" id="J_bench" min="0.02" max="0.15" step="0.001" value="0.061">
+          <div class="hint">kg·m² · 台架标定基准 0.061</div>
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="T_max">最大可用扭矩 T_max</label><span class="val" id="T_max_v"></span></div>
+          <input type="range" id="T_max" min="10" max="80" step="1" value="20">
+          <div class="hint">Nm · 台架ISG侧</div>
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="redundancy">调速时间冗余系数</label><span class="val" id="redundancy_v"></span></div>
+          <input type="range" id="redundancy" min="1" max="3" step="0.1" value="1.5">
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="t0">扭矩响应基础延时 t0</label><span class="val" id="t0_v"></span></div>
+          <input type="range" id="t0" min="0" max="300" step="5" value="100">
+          <div class="hint">ms</div>
+        </div>
+      </div>
+
+      <div class="panel pgroup">
+        <h2><span class="dot"></span>P1+P3实车预测参数</h2>
+        <div class="field">
+          <div class="field-head"><label for="J_vehicle">整车等效惯量 J_vehicle</label><span class="val" id="J_vehicle_v"></span></div>
+          <input type="range" id="J_vehicle" min="0.2" max="5" step="0.05" value="1.5">
+          <div class="hint">kg·m² · 折算到P1/ISG轴，参考《不同车型实车转动惯量估算》区间0.4~3.4</div>
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="T_max_vehicle">P3电机同步扭矩 T_max_v</label><span class="val" id="T_max_vehicle_v"></span></div>
+          <input type="range" id="T_max_vehicle" min="50" max="300" step="5" value="150">
+          <div class="hint">Nm · 实车P3电机可用于同步转速的扭矩</div>
+        </div>
+        <div class="field">
+          <div class="hint">预测场景的 ISG / TM 转速在顶部"结合／分离动态过程"窗口中设定，速差 Δω = |n_TM − n_ISG| 由此自动得到。</div>
+        </div>
+        <button class="btn primary" id="autoCalBtn" style="margin-top:6px">⟲ 基于台架数据优化标定公式</button>
+      </div>
+
+      <button class="btn" id="resetBtn">重置为默认值</button>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="stats-row">
+        <div class="stat" id="statR2Box"><div class="k">调速时间公式 R²</div><div class="v" id="statR2">–</div></div>
+        <div class="stat" id="statR2CloseBox"><div class="k">闭合时间公式 R²</div><div class="v" id="statR2Close">–</div></div>
+        <div class="stat" id="statErrBox"><div class="k">完整结合时间 MAPE</div><div class="v" id="statErr">–<small>%</small></div></div>
+        <div class="stat" style="border-color:color-mix(in srgb, var(--accent) 45%, var(--border))">
+          <div class="k">实车预测结合时间</div><div class="v" id="statVehicle">–<small>ms</small></div>
+        </div>
+      </div>
+
+      <div class="panel card">
+        <h3>调速时间(=PreEngage阶段)：设计公式 vs 台架标定公式
+          <span class="legend">
+            <span><span class="swatch" style="background:var(--muted)"></span>设计公式</span>
+            <span><span class="swatch" style="background:var(--sim)"></span>台架标定公式</span>
+            <span><span class="swatch" style="background:var(--muted);width:7px;height:7px;border-radius:50%"></span>调速时间表数据点(在设计公式曲线上)</span>
+            <span>散点=实测PreEngage(按下方sheet配色)</span>
+          </span>
+        </h3>
+        <p class="desc">
+          <b>第一步：回归"调速时间"公式，只与速差Δω有关，忽略TM/ISG初始转速。</b>
+          "转速响应时间.xlsx"给出的是按不同速差计算的调速时间（其中忽略了TM和ISG的初始转速），对应台架数据中的"PreEngage持续时间"列。
+          方法一·设计公式：t = t0 + 冗余系数×(J_isg+J_bench)×(2π/60)/T_max × Δω（∝Δω¹）。"转速响应时间.xlsx"按 T_max=20Nm、冗余系数=1.5 计算，表中各转差对应的调速时间以灰色散点画在设计公式曲线上；左侧参数保持默认值时各点均落在曲线上，调整 T_max、冗余系数等参数后曲线随之变化，可直接看出与表中数值的偏差（图中显示0~3000rpm范围）。
+          方法二·台架标定公式：对45个样本的PreEngage持续时间做 t₁ = a + m·Δω^p 回归（同样只用Δω作自变量），p在[0.2,1.3]区间内搜索最优值。
+        </p>
+        <div class="chart-box"><canvas id="chartResponse" height="240"></canvas></div>
+      </div>
+
+      <div class="panel card">
+        <h3>电磁离合器完整结合时间(=闭合至Engaged)：调速时间+闭合时间
+          <span class="legend">
+            <span><span class="swatch" style="background:var(--cat-teal)"></span>静态闭合(12行)</span>
+            <span><span class="swatch" style="background:var(--cat-purple)"></span>小速差(11工况中值)</span>
+            <span><span class="swatch" style="background:var(--cat-coral)"></span>中速差(11工况中值)</span>
+            <span><span class="swatch" style="background:var(--cat-pink)"></span>大速差(11工况中值)</span>
+          </span>
+        </h3>
+        <div class="legend legend-marks">
+          <span><span class="mk mk-solid"></span>实心点＝完整结合时间（左轴，ms）</span>
+          <span><span class="mk mk-hollow"></span>空心圈＝该样本的初始TM转速（右轴，rpm）</span>
+          <span><span class="swatch" style="background:var(--sim);height:3px"></span>回归曲线族（按初始TM转速）</span>
+          <span><span class="swatch dash" style="color:var(--muted)"></span>对照：调速时间公式</span>
+        </div>
+        <p class="desc">
+          <b>第二步：按"完整结合时间 = 调速时间 + 闭合时间"回归闭合时间，这一段需要考虑TM与ISG初始转速。</b>
+          闭合时间 = 闭合至Engaged时间 − PreEngage持续时间，用带岭正则的多元回归 t₂ = c₀ + c₁·Δω^p + c₂·n_ISG + c₃·n_TM + c₄·(n_TM/1000)² 标定（TM二次项用于复现高转速下闭合时间明显变长的特征）
+          （台架数据显示：TM初始转速超过约5000rpm后闭合时间明显变长，仅用Δω无法解释这一现象）。
+          橙色实线为 t₁+t₂ 的回归曲线族，按初始TM转速 500/2000/4000/6000/8000/10000 rpm 分别绘制（颜色由浅到深），每个样本在图中出现两次、横坐标相同：实心点是它的完整结合时间（左轴），空心圈是它的初始TM转速（右轴），用于对照该样本处在哪条TM回归曲线附近；灰色虚线是"若误把调速时间公式直接当完整结合时间"的对照。
+        </p>
+        <div class="chart-box"><canvas id="chartBenchFit" height="280"></canvas></div>
+      </div>
+
+      <div class="panel card">
+        <h3>按sheet汇总：完整结合时间标定前后误差对比</h3>
+        <p class="desc">标定前=直接把调速时间公式当完整结合时间预测的MAPE，代表未做两段拆分时的误判程度；标定后=调速时间公式 t₁ + 闭合时间公式 t₂ 相加后的MAPE（逐样本用该样本自身的ISG/TM初始转速计算）。</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>数据来源(sheet)</th><th>样本数</th><th>平均Δω(rpm)</th><th>调速时间 实测→仿真(ms)</th><th>闭合时间 实测→仿真(ms)</th><th>完整结合 实测(ms)</th><th>标定前MAPE</th><th>标定后MAPE</th></tr></thead>
+            <tbody id="benchTableBody"></tbody>
+          </table>
+        </div>
+        <div class="note">"静态闭合"与"小速差"两个sheet的调速时间(PreEngage)实测普遍为0（Δω太小，控制逻辑直接跳过转速同步阶段），完整结合时间几乎全部来自闭合阶段的固定延时(~100ms)；幂函数在Δω→0时无法精确收敛到0，是小速差sheet标定后误差偏大的原因。"中速差""大速差"两个sheet的调速时间随Δω明显增长，是完整结合时间的主要变化来源，标定后误差明显收窄。</div>
+      </div>
+
+      <div class="panel card">
+        <h3>P1+P3架构：实车结合响应时间预测
+          <span class="legend">
+            <span><span class="swatch" style="background:var(--accent);height:4px"></span>当前场景实车预测</span>
+            <span><span class="swatch dash" style="color:var(--measured)"></span>台架标定</span>
+            <span><span class="swatch dash" style="color:var(--cat-teal)"></span>TM 2k</span>
+            <span><span class="swatch dash" style="color:var(--cat-purple)"></span>TM 4k</span>
+            <span><span class="swatch dash" style="color:var(--warn)"></span>TM 6k</span>
+            <span><span class="swatch dash" style="color:var(--cat-coral)"></span>TM 8k</span>
+            <span><span class="swatch dash" style="color:var(--cat-pink)"></span>TM 10k</span>
+          </span>
+        </h3>
+        <p class="desc">
+          完整结合时间(调速时间+闭合时间)按分量分别外推：调速时间分量代表ISG/P3电机主动调速能力，随惯量/扭矩比 (J_isg+J_vehicle)/T_max_v ÷ (J_isg+J_bench)/T_max 缩放；
+          闭合时间分量由ISG/TM初始转速决定，是电磁执行器/控制回路的固有属性，视为与驱动侧惯量、扭矩无关，实车场景下保持台架标定结果。
+          虚线为台架标定曲线，粗实线为当前场景的实车预测曲线，圆点为当前速差对应的预测点；细实线为按初始TM转速 2000~10000 rpm 绘制的实车预测曲线族，右侧坐标轴标出各曲线对应的初始TM转速，用于观察TM转速对闭合时间进而对完整结合时间的影响。台架数据显示TM约4000rpm以下闭合时间基本持平、更高转速下明显变长，因此TM 2k与4k两条曲线几乎重合，6k/8k/10k依次上抬。
+        </p>
+        <div class="chart-box"><canvas id="chartVehicle" height="240"></canvas></div>
+        <div class="note" id="vehicleFormulaNote"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const RPM2RAD = 2*Math.PI/60;
+
+// 转速响应时间.xlsx（T_max=20Nm、冗余系数=1.5、J_bench=0.061、J_isg=0.017、扭矩响应时间0.1s）
+// 调速时间 = 0.1 + Tepm×转差，Tepm = 1.5×(0.061+0.017)×2π/60÷20 = 0.00061261056745 s/rpm
+const RESPONSE_TABLE = [
+  [500,0.40630528372500],[1000,0.71261056745001],[1500,1.01891585117501],
+  [2000,1.32522113490002],[2500,1.63152641862502],[3000,1.93783170235003],
+  [3500,2.24413698607503],[4000,2.55044226980004],[4500,2.85674755352504],
+  [5000,3.16305283725005]
+];
+
+// RPU351B电磁离合器上汽齿台架测试数据.xlsx 中"静态闭合/小速差/中速差/大速差"四个sheet，
+// 每项为 [指令前转速误差Δω(rpm), PreEngage持续时间(ms), 闭合至Engaged时间(ms)]。
+// "小速差/中速差/大速差"三个sheet的11个工况、每个工况重复测试3~4次，取"闭合至Engaged时间"
+// 排序后的中间值（中位数）对应行代表该工况的样本值，剔除单次测量噪声。"静态闭合"保留全部12次原始重复测量。
+//
+// 关键对应关系（用户澄清）：
+//   "转速响应时间.xlsx"表格给出的时间 == 本表的 PreEngage持续时间（ISG转速同步阶段）
+//   "电磁离合器完整结合时间" == 本表的 闭合至Engaged时间 = 调速时间(PreEngage) + 闭合时间
+// 每项为 [ISG初始转速(rpm), TM初始转速(rpm), 指令前转速误差Δω(rpm), PreEngage持续时间(ms), 闭合至Engaged时间(ms)]
+// 注意：Δω(指令前转速误差)是"发出结合指令那一刻"的残余转速差，并不等于 TM初始转速-ISG初始转速
+//（ISG在发指令前已先行调速接近目标），因此 Δω 与 ISG/TM 初始转速是相互独立的三个输入量。
+const FULL_BENCH_DATA = {
+  "静态闭合": [[0,0,0.0,0.0,100.5],[0,0,0.0,0.0,100.5],[0,0,0.0,0.0,100.5],[0,0,0.0,0.0,100.4],[0,0,0.0,0.0,100.4],[0,0,0.2,0.0,100.4],[0,0,0.0,0.0,100.4],[0,0,0.0,0.0,100.4],[0,0,0.1,0.0,100.4],[0,0,0.0,10.0,100.4],[0,0,0.0,0.0,100.4],[0,0,0.0,0.0,100.4]],
+  "小速差": [[366.4,503.0,1.8,0.0,100.4],[732.7,997.8,1.1,0.0,100.4],[1463.6,1995.0,2.7,0.0,100.4],[2201.3,2992.6,1.3,0.0,100.4],[2935.2,3990.8,1.3,10.0,110.5],[3672.7,4997.3,3.2,0.0,100.4],[4408.6,5995.2,2.5,0.0,100.4],[5143.2,6992.6,2.3,0.0,100.4],[5877.5,7990.1,2.6,0.0,100.4],[6614.5,8987.8,1.4,0.0,100.4],[7345.7,10004.3,9.7,0.0,130.6]],
+  "中速差": [[263.4,503.3,51.3,140.6,301.3],[620.6,997.8,54.7,160.7,301.3],[1349.5,1995.3,57.2,160.7,311.4],[2084.4,2992.9,57.2,170.7,341.5],[2818.7,3990.6,57.4,160.7,341.5],[3560.2,4997.2,57.2,180.8,341.5],[4298.9,5995.0,55.0,80.3,271.2],[5036.6,6992.6,53.4,80.3,221.0],[5761.5,7990.2,58.1,90.4,381.6],[6500.3,8987.8,56.1,80.3,231.0],[7237.8,10004.3,61.5,100.4,381.7]],
+  "大速差": [[193.9,502.8,84.4,190.8,341.5],[494.8,996.9,114.8,210.9,361.6],[991.2,1994.7,228.7,261.1,411.8],[1493.8,2992.7,339.7,271.2,421.8],[1991.9,3990.3,453.3,291.3,441.9],[2696.4,4997.4,471.0,311.4,472.0],[3484.1,5995.0,445.4,251.1,502.2],[4484.5,6992.6,318.0,221.0,381.7],[4972.1,7990.1,435.7,261.1,582.5],[5989.3,8987.7,300.8,210.9,542.4],[6682.1,10004.2,327.5,231.0,662.9]]
+};
+const BENCH_SHEET_COLOR = {"静态闭合":"--cat-teal","小速差":"--cat-purple","中速差":"--cat-coral","大速差":"--cat-pink"};
+
+const DEFAULTS = {
+  J_isg:0.017, J_bench:0.061, T_max:20, redundancy:1.5, t0:100,
+  J_vehicle:1.5, T_max_vehicle:150, isg_vehicle:0, tm_vehicle:3000
+};
+// 结合前 ISG 转速：各工况均由滑块给定（纯电驱动时可设为0表示发动机/ISG静止）
+function scenarioIsg(){ return state.isg_vehicle; }
+// 预测/动画场景的速差：结合前 ISG 与 TM 转速之差
+function scenarioDelta(){ return Math.max(1, Math.abs(state.tm_vehicle - scenarioIsg())); }
+
+const ids = Object.keys(DEFAULTS);
+const state = Object.assign({}, DEFAULTS);
+const els = {};
+ids.forEach(id=>{ els[id]=document.getElementById(id); });
+
+// 台架标定回归结果，由 autoCalibrate() 计算并缓存
+// calibPre：调速时间(=PreEngage持续时间=转速响应时间.xlsx对应量)的标定；calibClose：闭合时间(=闭合至Engaged−PreEngage)的标定
+let calibPre = {a:100, m:0.4, p:1, r2:0, mape:0};
+let calibClose = {coef:[100,0,0,0,0], r2:0, mape:0};
+
+function fmt(id,v){
+  if(id==="J_isg"||id==="J_bench") return v.toFixed(3);
+  if(id==="J_vehicle") return v.toFixed(2);
+  if(id==="redundancy") return v.toFixed(1);
+  return Math.round(v).toString();
+}
+
+function readState(){
+  ids.forEach(id=>{
+    state[id]=parseFloat(els[id].value);
+    document.getElementById(id+"_v").textContent = fmt(id,state[id]);
+  });
+}
+
+// ---------- physics model ----------
+// 设计公式（物理量纲反推自"转速响应时间.xlsx"）：t(s) = t0 + B*Δω(rpm)
+function designSlopeMsPerRpm(Jx, Tmax){
+  const B = state.redundancy*(state.J_isg+Jx)*RPM2RAD/Tmax; // s/rpm
+  return B*1000; // ms/rpm
+}
+function designFormulaMs(deltaRpm, Jx, Tmax){
+  return state.t0 + designSlopeMsPerRpm(Jx, Tmax)*deltaRpm;
+}
+
+// 第一步：调速时间公式（= PreEngage持续时间 = "转速响应时间.xlsx"给出的量）
+// 只与速差Δω有关，忽略TM/ISG初始转速，形式 t = a + m*Δω^p
+function calibPreMs(deltaRpm){
+  return Math.max(0, calibPre.a + calibPre.m*Math.pow(deltaRpm, calibPre.p));
+}
+// 第二步：闭合时间公式（= 闭合至Engaged − PreEngage），需要考虑TM与ISG初始转速，
+// 采用多元线性回归 t = c0 + c1*Δω + c2*n_ISG + c3*n_TM
+function calibCloseMs(deltaRpm, isgRpm, tmRpm){
+  const c = calibClose.coef;
+  // Δω项沿用与调速时间同样的幂次(饱和特性)；TM转速加入二次项以复现台架数据中
+  // "约4000rpm以下闭合时间基本持平、更高转速下明显变长"的特征
+  return Math.max(0, c[0] + c[1]*Math.pow(Math.max(deltaRpm,0), calibPre.p) + c[2]*isgRpm + c[3]*tmRpm + c[4]*Math.pow(tmRpm/1000, 2));
+}
+// 完整结合时间(=闭合至Engaged) = 调速时间 + 闭合时间
+function calibEngagedMs(deltaRpm, isgRpm, tmRpm){
+  return calibPreMs(deltaRpm) + calibCloseMs(deltaRpm, isgRpm, tmRpm);
+}
+
+function linregress(points){
+  const n = points.length;
+  let sx=0, sy=0, sxx=0, sxy=0;
+  points.forEach(([x,y])=>{ sx+=x; sy+=y; sxx+=x*x; sxy+=x*y; });
+  const m = (n*sxy - sx*sy)/(n*sxx - sx*sx);
+  const a = (sy - m*sx)/n;
+  return {a,m};
+}
+
+function powerFit(pts){
+  const meanY = pts.reduce((s,p)=>s+p[1],0)/pts.length;
+  let best=null;
+  for(let p=0.2; p<=1.3; p+=0.02){
+    const transformed = pts.map(([x,y])=>[Math.pow(x,p), y]);
+    const {a,m} = linregress(transformed);
+    let sse=0;
+    pts.forEach(([x,y])=>{ const yp=a+m*Math.pow(x,p); sse+=(yp-y)*(yp-y); });
+    if(best===null || sse<best.sse) best={sse,p,a,m};
+  }
+  // MAPE(平均绝对百分比误差)在实测值接近0时无意义(分母趋于0会放大成失真的巨大百分比)，
+  // 因此按惯例只在有意义的非零样本上统计百分比误差；R²/SSE不受此影响，仍用全部样本。
+  let ssRes=0, ssTot=0, sumAbsPct=0, nPct=0;
+  const epsilon = Math.max(...pts.map(p=>Math.abs(p[1]))) * 0.02; // 相对量级的零值阈值
+  pts.forEach(([x,y])=>{
+    const yp = best.a+best.m*Math.pow(x,best.p);
+    ssRes += (yp-y)*(yp-y);
+    ssTot += (y-meanY)*(y-meanY);
+    if(Math.abs(y)>epsilon){ sumAbsPct += Math.abs((yp-y)/y*100); nPct++; }
+  });
+  return {a:best.a, m:best.m, p:best.p, r2: 1-ssRes/ssTot, mape: nPct?sumAbsPct/nPct:0};
+}
+
+// 高斯消元求解线性方程组 A·x = b（A为k×k，含部分主元选取）
+function solveLinear(A, b){
+  const k = b.length;
+  const M = A.map((row,i)=>row.concat([b[i]]));
+  for(let col=0; col<k; col++){
+    let piv = col;
+    for(let r=col+1; r<k; r++) if(Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r;
+    if(Math.abs(M[piv][col])<1e-12) continue;
+    [M[col],M[piv]] = [M[piv],M[col]];
+    for(let r=0; r<k; r++){
+      if(r===col) continue;
+      const f = M[r][col]/M[col][col];
+      for(let c=col; c<=k; c++) M[r][c] -= f*M[col][c];
+    }
+  }
+  return M.map((row,i)=> Math.abs(row[i])<1e-12 ? 0 : row[k]/row[i]);
+}
+
+// 多元线性最小二乘：y = c0 + c1*x1 + c2*x2 + ...
+// 自变量先做标准化(z-score)并加入轻度岭回归(ridge)，否则 Δω 与 n_ISG/n_TM 之间的强共线性
+// 会让单个系数被放大到物理上不合理的数值(例如Δω系数出现-9.7ms/rpm)，外推时直接失真。
+function multiLinearFit(X, y, lambda){
+  const n = X.length, kx = X[0].length;
+  const mean = new Array(kx).fill(0), std = new Array(kx).fill(0);
+  for(let j=0;j<kx;j++){
+    mean[j] = X.reduce((s,xi)=>s+xi[j],0)/n;
+    std[j] = Math.sqrt(X.reduce((s,xi)=>s+(xi[j]-mean[j])**2,0)/n) || 1;
+  }
+  const Z = X.map(xi=>xi.map((v,j)=>(v-mean[j])/std[j]));
+  const meanY0 = y.reduce((s,v)=>s+v,0)/n;
+  const yc = y.map(v=>v-meanY0);
+  const lam = (lambda===undefined?0.5:lambda)*n/100;
+  const A = Array.from({length:kx}, ()=>new Array(kx).fill(0));
+  const b = new Array(kx).fill(0);
+  Z.forEach((zi, idx)=>{
+    for(let i=0;i<kx;i++){
+      b[i] += zi[i]*yc[idx];
+      for(let j=0;j<kx;j++) A[i][j] += zi[i]*zi[j];
+    }
+  });
+  for(let i=0;i<kx;i++) A[i][i] += lam;
+  const bz = solveLinear(A, b);
+  // 还原到原始量纲
+  const coefRaw = bz.map((v,j)=>v/std[j]);
+  const c0 = meanY0 - coefRaw.reduce((s,v,j)=>s+v*mean[j], 0);
+  const coef = [c0, ...coefRaw];
+  const meanY = meanY0;
+  let ssRes=0, ssTot=0, sumAbsPct=0, nPct=0;
+  const epsilon = Math.max(...y.map(Math.abs))*0.02;
+  X.forEach((xi, idx)=>{
+    const yp = coef[0] + xi.reduce((s,v,j)=>s+coef[j+1]*v, 0);
+    ssRes += (yp-y[idx])**2;
+    ssTot += (y[idx]-meanY)**2;
+    if(Math.abs(y[idx])>epsilon){ sumAbsPct += Math.abs((yp-y[idx])/y[idx]*100); nPct++; }
+  });
+  return {coef, r2: 1-ssRes/ssTot, mape: nPct?sumAbsPct/nPct:0};
+}
+
+function allSamples(){
+  const rows = [];
+  Object.entries(FULL_BENCH_DATA).forEach(([sheet, pts])=>{
+    pts.forEach(([isg,tm,d,pre,engaged])=>rows.push({sheet, isg, tm, d, pre, closing: engaged-pre, engaged}));
+  });
+  return rows;
+}
+
+function autoCalibrate(){
+  const rows = allSamples();
+  // 第一步：调速时间只对Δω回归（忽略TM/ISG初始转速）
+  calibPre = powerFit(rows.map(r=>[r.d, r.pre]));
+  // 第二步：闭合时间 = 完整结合时间 − 调速时间，对 [Δω^p, n_ISG, n_TM] 做带岭正则的多元线性回归
+  calibClose = multiLinearFit(
+    rows.map(r=>[Math.pow(Math.max(r.d,0), calibPre.p), r.isg, r.tm, Math.pow(r.tm/1000, 2)]),
+    rows.map(r=>r.closing)
+  );
+}
+
+function fitStats(){
+  const mDesign = designSlopeMsPerRpm(state.J_bench, state.T_max);
+  return Object.entries(FULL_BENCH_DATA).map(([sheet, pts])=>{
+    const n = pts.length;
+    let sumD=0,sumEngaged=0,sumEngBefore=0,sumErrEngBefore=0,sumEngAfter=0,sumErrEngAfter=0;
+    let sumPre=0,sumPreSim=0,sumClose=0,sumCloseSim=0;
+    pts.forEach(([isg,tm,d,pre,engaged])=>{
+      const engBefore = state.t0 + mDesign*d;                 // 若(误)把调速时间公式直接当完整结合时间
+      const engAfter = calibEngagedMs(d, isg, tm);            // 正确：调速时间 + 闭合时间
+      sumD+=d; sumEngaged+=engaged; sumPre+=pre; sumClose+=(engaged-pre);
+      sumPreSim+=calibPreMs(d); sumCloseSim+=calibCloseMs(d,isg,tm);
+      sumEngBefore+=engBefore; sumEngAfter+=engAfter;
+      sumErrEngBefore += Math.abs((engBefore-engaged)/engaged*100);
+      sumErrEngAfter += Math.abs((engAfter-engaged)/engaged*100);
+    });
+    return {
+      sheet, n,
+      meanD: sumD/n, meanEngaged: sumEngaged/n,
+      meanPre: sumPre/n, meanPreSim: sumPreSim/n,
+      meanClose: sumClose/n, meanCloseSim: sumCloseSim/n,
+      meanEngBefore: sumEngBefore/n, mapeEngBefore: sumErrEngBefore/n,
+      meanEngAfter: sumEngAfter/n, mapeEngAfter: sumErrEngAfter/n,
+    };
+  });
+}
+
+// ---------- canvas chart helpers ----------
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function hexToRgba(hex, a){
+  const h = hex.replace('#','');
+  const n = h.length===3 ? h.split('').map(c=>c+c).join('') : h;
+  const r=parseInt(n.slice(0,2),16), g=parseInt(n.slice(2,4),16), b=parseInt(n.slice(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ---------- 画布尺寸与渲染健壮性 ----------
+// 不同Windows/Chrome组合的渲染后端不同（GPU加速 / SwiftShader软件渲染），需同时满足：
+//   · 动画帧内绝不读取布局（clientWidth等），否则与DOM写入交替会造成每帧强制重排 → 卡顿/跳变；
+//   · 只在尺寸真正变化时重设位图（ResizeObserver，忽略亚像素抖动），DPR变化时同样重设；
+//   · 上下文丢失可恢复，位图过大时降DPR，看门狗定期体检自愈。
+const MAX_CANVAS_PX = 12e6;
+const _cvList = [];
+const _cvState = new WeakMap();
+
+const _cvObserver = (typeof ResizeObserver!=='undefined') ? new ResizeObserver(entries=>{
+  let changed = false;
+  entries.forEach(e=>{
+    const st = _cvState.get(e.target); if(!st) return;
+    // 只关心取整后的宽度变化；缩放125%/150%时 contentRect 会有亚像素抖动，不能每次都触发重绘
+    const w = Math.round(e.contentRect.width);
+    if(w !== st.obsW){ st.obsW = w; st.dirty = true; changed = true; }
+  });
+  if(changed && typeof scheduleRender==='function') scheduleRender();
+}) : null;
+
+function effectiveDpr(cssW, cssH){
+  let dpr = Math.min(window.devicePixelRatio || 1, 3);
+  while(dpr > 1 && cssW*dpr*cssH*dpr > MAX_CANVAS_PX) dpr -= 0.25;
+  return Math.max(1, dpr);
+}
+
+function registerCanvas(canvas){
+  // 设计高度必须在第一次设置位图尺寸之前记录：canvas.height 赋值会同时改写 height 属性，
+  // 若之后再从属性读取，缩放(DPR≠1)后高度会被反复乘以DPR而不断变大/变小。
+  const cssH0 = parseInt(canvas.dataset.cssH || canvas.getAttribute('height')) || canvas.clientHeight || 150;
+  canvas.dataset.cssH = cssH0;
+  const st = {dirty:true, w:0, h:0, dpr:1, rawDpr:0, obsW:-1, lost:false, epoch:0, cssH0};
+  _cvState.set(canvas, st);
+  _cvList.push(canvas);
+  if(_cvObserver) _cvObserver.observe(canvas);
+  canvas.addEventListener('contextlost', e=>{ e.preventDefault(); st.lost = true; }, false);
+  canvas.addEventListener('contextrestored', ()=>{
+    st.lost = false; st.dirty = true; st.rawDpr = 0;
+    if(typeof scheduleRender==='function') scheduleRender();
+  }, false);
+  return st;
+}
+
+function setupCanvas(canvas){
+  const st = _cvState.get(canvas) || registerCanvas(canvas);
+  const ctx = canvas.getContext('2d');
+  if(!ctx) return null;
+  if(ctx.isContextLost && ctx.isContextLost()){ st.lost = true; return null; }
+  if(st.lost) return null;
+
+  const rawDpr = window.devicePixelRatio || 1;          // 读取DPR不触发重排
+  if(st.rawDpr !== rawDpr){ st.rawDpr = rawDpr; st.dirty = true; }
+
+  if(st.dirty){                                          // 仅在需要时才读取布局
+    const cssW = canvas.clientWidth || (canvas.parentElement && canvas.parentElement.clientWidth) || 0;
+    const cssH = st.cssH0;
+    if(cssW>0 && cssH>0){
+      const dpr = effectiveDpr(cssW, cssH);
+      const pw = Math.max(1, Math.round(cssW*dpr)), ph = Math.max(1, Math.round(cssH*dpr));
+      if(canvas.width!==pw || canvas.height!==ph){ canvas.width = pw; canvas.height = ph; }
+      canvas.style.height = cssH+"px";
+      st.w = cssW; st.h = cssH; st.dpr = dpr; st.dirty = false;
+      st.epoch++;                                        // 位图可能已被清空，通知按需重绘的画布
+    }
+  }
+  if(!(st.w>0 && st.h>0)) return null;
+  if(canvas.width===0 || canvas.height===0){ st.dirty = true; return null; }
+
+  ctx.setTransform(st.dpr,0,0,st.dpr,0,0);
+  return {ctx, w:st.w, h:st.h, epoch:st.epoch};
+}
+
+function invalidateAllCanvases(){
+  _cvList.forEach(c=>{ const st=_cvState.get(c); if(st){ st.dirty = true; st.rawDpr = 0; } });
+  if(typeof scheduleRender==='function') scheduleRender();
+}
+
+// 看门狗（每2秒，允许读布局）：上下文丢失、位图被清零、尺寸与布局不符时自愈
+function canvasWatchdog(){
+  let needRedraw = false;
+  _cvList.forEach(canvas=>{
+    const st = _cvState.get(canvas); if(!st) return;
+    const ctx = canvas.getContext('2d');
+    const lost = !ctx || (ctx.isContextLost && ctx.isContextLost());
+    if(lost){ st.lost = true; st.dirty = true; needRedraw = true; return; }
+    if(st.lost){ st.lost = false; st.dirty = true; needRedraw = true; }
+    const cssW = canvas.clientWidth;
+    if(canvas.width===0 || canvas.height===0 ||
+       (cssW>0 && Math.abs(canvas.width - Math.round(cssW*st.dpr)) > 2)){
+      st.dirty = true; needRedraw = true;
+    }
+  });
+  if(needRedraw && typeof scheduleRender==='function') scheduleRender();
+
+  const stillLost = _cvList.some(c=>{ const st=_cvState.get(c); return st && st.lost; });
+  _lostRounds = stillLost ? _lostRounds+1 : 0;
+  const note = document.getElementById('canvasLostNote');
+  if(note) note.style.display = _lostRounds>=3 ? 'block' : 'none';
+}
+let _lostRounds = 0;
+setInterval(canvasWatchdog, 2000);
+
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) invalidateAllCanvases(); });
+window.addEventListener('pageshow', invalidateAllCanvases);
+// DPR 监听：Chrome 缩放(Ctrl +/-)会改变 devicePixelRatio。媒体查询绑定的是"注册时的DPR"，
+// 因此每次触发后必须按新的DPR重新注册，否则只有第一次缩放能被捕获。
+function watchDpr(){
+  if(!window.matchMedia) return;
+  try{
+    const mqDpr = window.matchMedia(`(resolution: ${window.devicePixelRatio||1}dppx)`);
+    const onDpr = ()=>{
+      if(mqDpr.removeEventListener) mqDpr.removeEventListener('change', onDpr); else if(mqDpr.removeListener) mqDpr.removeListener(onDpr);
+      invalidateAllCanvases();
+      watchDpr();
+    };
+    if(mqDpr.addEventListener) mqDpr.addEventListener('change', onDpr); else if(mqDpr.addListener) mqDpr.addListener(onDpr);
+  }catch(e){ /* 老版本浏览器不支持 resolution 媒体查询，由 resize 与看门狗兜底 */ }
+}
+watchDpr();
+
+// 软件渲染检测：chrome://gpu 中 Canvas 显示 "Software only" 的机器，WebGL渲染器通常为 SwiftShader
+function detectSoftwareRendering(){
+  try{
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if(!gl) return true;
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const r = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    const lose = gl.getExtension('WEBGL_lose_context'); if(lose) lose.loseContext();   // 释放探测用上下文
+    return /swiftshader|llvmpipe|software|basic render/i.test(r);
+  }catch(e){ return false; }
+}
+
+function niceTicks(min,max,count){
+  if(min===max){ min-=1; max+=1; }
+  const span = max-min;
+  const step0 = span/count;
+  const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const norm = step0/mag;
+  let step;
+  if(norm<1.5) step=1*mag; else if(norm<3) step=2*mag; else if(norm<7) step=5*mag; else step=10*mag;
+  const niceMin = Math.floor(min/step)*step;
+  const niceMax = Math.ceil(max/step)*step;
+  const ticks=[];
+  for(let v=niceMin; v<=niceMax+1e-9; v+=step) ticks.push(v);
+  return ticks;
+}
+
+function drawLineChart(canvas, opts){
+  const cv = setupCanvas(canvas); if(!cv) return;
+  const {ctx,w,h} = cv;
+  ctx.clearRect(0,0,w,h);
+  const ink = cssVar('--ink'), muted = cssVar('--muted'), grid = cssVar('--grid');
+  const padL=(opts.padL||52)+(opts.yLabel?14:0), padR=(opts.padR||18)+(opts.y2Label?14:0), padT=16, padB=(opts.xLabel?48:32);
+  const plotW = w-padL-padR, plotH = h-padT-padB;
+
+  let allX=[], allY=[];
+  opts.series.forEach(s=>s.data.forEach(p=>{allX.push(p[0]); allY.push(p[1]);}));
+  if(opts.y2series) opts.y2series.forEach(s=>s.data.forEach(p=>{allX.push(p[0]);}));
+  let xMin=Math.min(...allX), xMax=Math.max(...allX);
+  let yMin=Math.min(...allY), yMax=Math.max(...allY);
+  if(opts.yMin!==undefined) yMin=opts.yMin;
+  const yPad=(yMax-yMin)*0.1||1;
+  yMin -= yPad; yMax += yPad;
+  if(opts.yMinFloor!==undefined) yMin=Math.max(yMin,opts.yMinFloor);
+
+  const xTicks = niceTicks(xMin,xMax,5);
+  const yTicks = niceTicks(yMin,yMax,5);
+  xMin=xTicks[0]; xMax=xTicks[xTicks.length-1];
+  yMin=yTicks[0]; yMax=yTicks[yTicks.length-1];
+
+  const X = x => padL + (x-xMin)/(xMax-xMin||1)*plotW;
+  const Y = y => padT + plotH - (y-yMin)/(yMax-yMin||1)*plotH;
+
+  // grid + y ticks
+  ctx.strokeStyle = grid; ctx.lineWidth=1; ctx.font="11px "+cssVar('--font-mono')||'monospace';
+  ctx.fillStyle = muted; ctx.textAlign='right'; ctx.textBaseline='middle';
+  yTicks.forEach(v=>{
+    const y=Y(v);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+    ctx.fillText(opts.yFmt?opts.yFmt(v):v.toFixed(0), padL-8, y);
+  });
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  xTicks.forEach(v=>{
+    const x=X(v);
+    ctx.fillText(opts.xFmt?opts.xFmt(v):v.toFixed(0), x, padT+plotH+8);
+  });
+
+  // axis lines
+  ctx.strokeStyle = cssVar('--border');
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+
+  function drawSeries(s, yScaleFn){
+    // width===0 表示纯散点：不画连线（原先 s.width||2 会把0当作未设置而连成2px折线）
+    const lw = (s.width===undefined) ? 2 : s.width;
+    if(lw > 0){
+      ctx.beginPath();
+      ctx.strokeStyle = s.color; ctx.lineWidth = lw;
+      if(s.dash) ctx.setLineDash(s.dash); else ctx.setLineDash([]);
+      s.data.forEach((p,i)=>{
+        const x=X(p[0]), y=yScaleFn(p[1]);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if(s.points){
+      const r = s.pointRadius || 3;
+      s.data.forEach(p=>{
+        ctx.beginPath(); ctx.arc(X(p[0]), yScaleFn(p[1]), r, 0, Math.PI*2);
+        if(s.hollow){
+          ctx.fillStyle = cssVar('--surface'); ctx.fill();          // 空心：底色填充再描边，避免被下层线条穿透
+          ctx.strokeStyle = s.color; ctx.lineWidth = 1.5; ctx.stroke();
+        } else {
+          ctx.fillStyle = s.color; ctx.fill();
+        }
+      });
+    }
+  }
+  opts.series.forEach(s=>drawSeries(s, Y));
+
+  if(opts.y2series){
+    let y2Min, y2Max, y2Ticks;
+    if(opts.y2Min!==undefined && opts.y2Max!==undefined){
+      // 固定范围（如TM转速 0~10000rpm），刻度按给定步长，保证数据点与刻度一一对应
+      y2Min = opts.y2Min; y2Max = opts.y2Max; y2Ticks = [];
+      const step = opts.y2Step || (y2Max-y2Min)/5;
+      for(let v=y2Min; v<=y2Max+1e-9; v+=step) y2Ticks.push(v);
+    } else {
+      y2Min=Math.min(...opts.y2series.flatMap(s=>s.data.map(p=>p[1])));
+      y2Max=Math.max(...opts.y2series.flatMap(s=>s.data.map(p=>p[1])));
+      const y2Pad=(y2Max-y2Min)*0.15||1; y2Min-=y2Pad; y2Max+=y2Pad*0.2;
+      y2Ticks = niceTicks(y2Min,y2Max,4);
+      y2Min=y2Ticks[0]; y2Max=y2Ticks[y2Ticks.length-1];
+    }
+    const Y2 = y => padT + plotH - (y-y2Min)/(y2Max-y2Min||1)*plotH;
+    const y2Col = opts.y2Color||opts.y2series[0].color;
+    ctx.textAlign='left'; ctx.textBaseline='middle';   // 之前沿用x轴的'top'基线，文字整体下移半行，与数据点错位
+    ctx.fillStyle=y2Col; ctx.strokeStyle=y2Col; ctx.lineWidth=1;
+    y2Ticks.forEach(v=>{
+      const y=Y2(v);
+      ctx.beginPath(); ctx.moveTo(padL+plotW, y); ctx.lineTo(padL+plotW+4, y); ctx.stroke();
+      ctx.fillText((opts.y2Fmt?opts.y2Fmt(v):v.toFixed(1)), padL+plotW+7, y);
+    });
+    opts.y2series.forEach(s=>drawSeries(s, Y2));
+  }
+
+  if(opts.hLine!==undefined){
+    ctx.strokeStyle = opts.hLineColor||muted; ctx.setLineDash([4,3]); ctx.lineWidth=1;
+    const y=Y(opts.hLine);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // 曲线文字标注（如按不同TM初始转速绘制的回归曲线族）
+  if(opts.annotations){
+    ctx.font="11px "+cssVar('--font-mono'); ctx.textBaseline='middle';
+    opts.annotations.forEach(a=>{
+      ctx.fillStyle = a.color||ink; ctx.textAlign = a.align||'left';
+      ctx.fillText(a.text, X(a.x)+(a.dx||4), Y(a.y)+(a.dy||0));
+    });
+  }
+
+  // 坐标轴含义标注（值定义）
+  ctx.fillStyle = ink; ctx.font="12px "+cssVar('--font-body');
+  if(opts.xLabel){
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillText(opts.xLabel, padL+plotW/2, h-4);
+  }
+  if(opts.yLabel){
+    ctx.save();
+    ctx.translate(12, padT+plotH/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillText(opts.yLabel, 0, 0);
+    ctx.restore();
+  }
+  if(opts.y2Label){
+    ctx.save();
+    ctx.translate(w-4, padT+plotH/2);
+    ctx.rotate(Math.PI/2);
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillStyle = opts.y2Color || (opts.y2series ? opts.y2series[0].color : ink);
+    ctx.fillText(opts.y2Label, 0, 0);
+    ctx.restore();
+  }
+}
+
+// ---------- render ----------
+function render(){
+  readState();
+
+  // 图1：调速时间(=PreEngage阶段) —— 设计公式 vs 台架标定PreEngage公式 vs 原表 vs 实测PreEngage散点
+  const RESP_XMAX = 3000;
+  const respDesign=[], respCalib=[];
+  for(let i=0;i<=30;i++){
+    const d = RESP_XMAX*i/30;
+    respDesign.push([d, designFormulaMs(d, state.J_bench, state.T_max)/1000]);
+    respCalib.push([d, calibPreMs(d)/1000]);
+  }
+  const respRef = RESPONSE_TABLE.filter(([d])=>d<=RESP_XMAX).map(([d,t])=>[d,t]);
+  const preScatter = Object.entries(FULL_BENCH_DATA).map(([sheet,pts])=>({
+    data: pts.map(([,,d,pre])=>[d, pre/1000]), color: cssVar(BENCH_SHEET_COLOR[sheet]), width:0, points:true
+  }));
+  drawLineChart(document.getElementById('chartResponse'), {
+    series:[
+      {data:respDesign, color:cssVar('--muted'), width:2, dash:[2,3]},
+      {data:respCalib, color:cssVar('--sim'), width:2.5},
+      {data:respRef, color:cssVar('--muted'), width:0, points:true},
+      ...preScatter,
+    ],
+    xFmt:v=>v/1000+'k', yFmt:v=>v.toFixed(1)+'s',
+    yMinFloor:0,
+    xLabel:'转速差 Δω (rpm)', yLabel:'调速时间 (s)'
+  });
+
+  // stats：调速时间R²、闭合时间R²、完整结合时间MAPE（逐样本用自身ISG/TM初始转速预测）
+  const samples = allSamples();
+  let sumEngPct=0;
+  samples.forEach(s=>{ sumEngPct += Math.abs((calibEngagedMs(s.d,s.isg,s.tm)-s.engaged)/s.engaged*100); });
+  const engMape = sumEngPct/samples.length;
+  document.getElementById('statR2').textContent = calibPre.r2.toFixed(3);
+  document.getElementById('statR2Close').textContent = calibClose.r2.toFixed(3);
+  document.getElementById('statErr').innerHTML = engMape.toFixed(1)+'<small>%</small>';
+  const r2box=document.getElementById('statR2Box'), r2cbox=document.getElementById('statR2CloseBox'), errbox=document.getElementById('statErrBox');
+  r2box.className='stat '+(calibPre.r2>0.6?'badge-good':(calibPre.r2>0.3?'':'badge-bad'));
+  r2cbox.className='stat '+(calibClose.r2>0.6?'badge-good':(calibClose.r2>0.3?'':'badge-bad'));
+  errbox.className='stat '+(engMape<15?'badge-good':(engMape<35?'':'badge-bad'));
+
+  // 图2：完整结合时间(=闭合至Engaged) —— 调速时间+闭合时间 组合曲线 vs 实测散点
+  // 闭合时间与ISG/TM初始转速相关，因此曲线按左侧"预测场景ISG/TM初始转速"取值绘制
+  const engScatter = Object.entries(FULL_BENCH_DATA).map(([sheet,pts])=>({
+    data: pts.map(([,,d,,engaged])=>[d, engaged]), color: cssVar(BENCH_SHEET_COLOR[sheet]), width:0, points:true
+  }));
+  const curveXMax = 600, curveSteps=40;
+  const mDesignChart = designSlopeMsPerRpm(state.J_bench, state.T_max);
+  const designAsEngagedCurve=[];
+  for(let i=0;i<=curveSteps;i++){
+    const x=curveXMax*i/curveSteps;
+    designAsEngagedCurve.push([x, state.t0+mDesignChart*x]);
+  }
+  // 按不同初始TM转速绘制的回归曲线族（ISG初始转速按台架工况近似取 0.73×TM，与各sheet中ISG/TM关系一致）
+  const TM_FAMILY = [500, 2000, 4000, 6000, 8000, 10000];
+  const simHex = cssVar('--sim');
+  const famSeries = [], famAnn = [];
+  TM_FAMILY.forEach((tm, i)=>{
+    const pts=[];
+    for(let k=0;k<=curveSteps;k++){ const x=curveXMax*k/curveSteps; pts.push([x, calibEngagedMs(x, tm*0.73, tm)]); }
+    const alpha = 0.35 + 0.65*i/(TM_FAMILY.length-1);
+    famSeries.push({data:pts, color:hexToRgba(simHex, alpha), width: i===TM_FAMILY.length-1?2.5:1.5});
+    const lx = curveXMax*(0.30 + i*0.12), ly = calibEngagedMs(lx, tm*0.73, tm);
+    famAnn.push({x:lx, y:ly, text:'TM '+(tm/1000)+'k', color:hexToRgba(simHex, Math.max(alpha,0.7)), align:'center', dx:0, dy:-9});
+  });
+  // 右轴：各样本的初始TM转速（空心标记），用于对照散点所处的转速水平
+  const tmMarkers = Object.entries(FULL_BENCH_DATA).map(([sheet,pts])=>({
+    data: pts.map(([,tm,d])=>[d, tm]), color: cssVar(BENCH_SHEET_COLOR[sheet]), width:0, points:true, hollow:true, pointRadius:3.5
+  }));
+  drawLineChart(document.getElementById('chartBenchFit'), {
+    series:[
+      ...engScatter,
+      {data:designAsEngagedCurve, color:cssVar('--muted'), width:2, dash:[2,3]},
+      ...famSeries,
+    ],
+    y2series: tmMarkers, y2Min:0, y2Max:10000, y2Step:2000, y2Fmt:v=>(v/1000).toFixed(0)+'k', y2Label:'初始TM转速 (rpm)',
+    annotations: famAnn, padR: 44, y2Color: cssVar('--muted'),
+    xFmt:v=>v.toFixed(0), yFmt:v=>v.toFixed(0)+'ms',
+    yMinFloor:0,
+    xLabel:'转速差 Δω (rpm)', yLabel:'完整结合时间 (ms)'
+  });
+
+  // bench table：两段分解(调速时间/闭合时间 实测→仿真) + 完整结合时间标定前后误差
+  const rows = fitStats();
+  const tbody = document.getElementById('benchTableBody');
+  tbody.innerHTML = rows.map(r=>{
+    const pillBefore = r.mapeEngBefore<15?'good':(r.mapeEngBefore<35?'warn':'bad');
+    const pillAfter = r.mapeEngAfter<15?'good':(r.mapeEngAfter<35?'warn':'bad');
+    return `<tr>
+      <td class="name">${r.sheet}</td>
+      <td>${r.n}</td>
+      <td>${r.meanD.toFixed(1)}</td>
+      <td>${r.meanPre.toFixed(1)} → ${r.meanPreSim.toFixed(1)}</td>
+      <td>${r.meanClose.toFixed(1)} → ${r.meanCloseSim.toFixed(1)}</td>
+      <td>${r.meanEngaged.toFixed(1)}</td>
+      <td><span class="pill ${pillBefore}">${r.mapeEngBefore.toFixed(1)}%</span></td>
+      <td><span class="pill ${pillAfter}">${r.mapeEngAfter.toFixed(1)}%</span></td>
+    </tr>`;
+  }).join('');
+
+  // 实车预测：调速时间分量按惯量/扭矩比缩放(ISG与实车P3主动调速能力差异)；
+  // 闭合时间分量由ISG/TM初始转速决定，视为电磁执行器/控制回路固有特性，不随惯量缩放
+  const ratio = designSlopeMsPerRpm(state.J_vehicle, state.T_max_vehicle) / designSlopeMsPerRpm(state.J_bench, state.T_max);
+  const mVehiclePre = calibPre.m * ratio;
+  const vehiclePreMs = (d) => Math.max(0, calibPre.a + mVehiclePre*Math.pow(d, calibPre.p));
+  const vehicleFormulaMs = (d) => vehiclePreMs(d) + calibCloseMs(d, scenarioIsg(), state.tm_vehicle);
+  const dV = scenarioDelta();
+  const vehiclePredictMs = vehicleFormulaMs(dV);
+  const vPre = vehiclePreMs(dV);
+  const isgV = scenarioIsg();
+  const vClose = calibCloseMs(dV, isgV, state.tm_vehicle);
+  document.getElementById('statVehicle').innerHTML = vehiclePredictMs.toFixed(0)+'<small>ms</small>';
+
+  const xMax = Math.max(1200, dV*1.1), steps=40;
+  const benchLine=[], vehicleLine=[];
+  for(let i=0;i<=steps;i++){
+    const x=xMax*i/steps;
+    benchLine.push([x, calibEngagedMs(x, scenarioIsg(), state.tm_vehicle)]);
+    vehicleLine.push([x, vehicleFormulaMs(x)]);
+  }
+  // 实车预测曲线族：不同初始TM转速下的完整结合时间（右侧坐标轴给出各曲线对应的TM转速）
+  const VTM_FAMILY = [2000, 4000, 6000, 8000, 10000];
+  const VTM_COLORS = ['--cat-teal','--cat-purple','--warn','--cat-coral','--cat-pink'];
+  const vFam=[], vFamAnn=[], vTmMarkers=[];
+  VTM_FAMILY.forEach((tm,i)=>{
+    const col = cssVar(VTM_COLORS[i]);
+    const pts=[];
+    for(let k=0;k<=steps;k++){ const x=xMax*k/steps; pts.push([x, vehiclePreMs(x)+calibCloseMs(x, isgV, tm)]); }
+    vFam.push({data:pts, color:col, width:2, dash:[8,4]});
+    const lx = xMax*(0.22 + i*0.16), ly = vehiclePreMs(lx)+calibCloseMs(lx, isgV, tm);
+    vFamAnn.push({x:lx, y:ly, text:'TM '+(tm/1000)+'k', color:col, align:'center', dy:-10});
+    vTmMarkers.push({data:[[xMax, tm]], color:col, width:0, points:true});
+  });
+  drawLineChart(document.getElementById('chartVehicle'), {
+    series:[
+      {data:benchLine, color:cssVar('--measured'), width:2, dash:[5,4]},
+      {data:vehicleLine, color:cssVar('--accent'), width:3},
+      ...vFam,
+      {data:[[dV, vehiclePredictMs]], color:cssVar('--accent'), width:0, points:true},
+    ],
+    y2series:vTmMarkers,
+    y2Min:0, y2Max:10000, y2Step:2000,
+    y2Fmt:v=>(v/1000).toFixed(0)+'k', y2Label:'初始TM转速 (rpm)', y2Color:cssVar('--muted'),
+    annotations:vFamAnn, padR:44,
+    xFmt:v=>v.toFixed(0), yFmt:v=>v.toFixed(0)+'ms',
+    yMinFloor:0,
+    xLabel:'转速差 Δω (rpm)', yLabel:'完整结合时间 (ms)'
+  });
+  const c = calibClose.coef;
+  document.getElementById('vehicleFormulaNote').innerHTML =
+    `第一步·调速时间(只与Δω有关)：t₁ = ${calibPre.a.toFixed(1)} + ${calibPre.m.toFixed(3)}×Δω^${calibPre.p.toFixed(2)} (ms)，R²=${calibPre.r2.toFixed(3)}。<br>` +
+    `第二步·闭合时间(考虑初始转速)：t₂ = ${c[0].toFixed(1)} + ${c[1].toFixed(3)}×Δω^${calibPre.p.toFixed(2)} + ${c[2].toFixed(4)}×n_ISG + ${c[3].toFixed(4)}×n_TM + ${c[4].toFixed(3)}×(n_TM/1000)² (ms)，R²=${calibClose.r2.toFixed(3)}。<br>` +
+    `实车换算：t₁分量按惯量/扭矩比 ${ratio.toFixed(2)}× 缩放 → t₁ = ${calibPre.a.toFixed(1)} + ${mVehiclePre.toFixed(3)}×Δω^${calibPre.p.toFixed(2)}；t₂分量保持台架标定不变。<br>` +
+    `当前场景 n_ISG=${isgV}rpm、n_TM=${state.tm_vehicle}rpm（Δω=${dV.toFixed(0)}rpm）：调速时间≈${vPre.toFixed(0)}ms + 闭合时间≈${vClose.toFixed(0)}ms = 完整结合时间 ≈ <b>${vehiclePredictMs.toFixed(0)}ms</b>。`;
+}
+
+// ---------- 电磁离合器结合/分离动态过程动画 ----------
+const VIS_W_MAX = 6.0, VIS_N_REF = 3000;       // 视觉角速度上限(rad/s)与参考转速(rpm)
+function visOmega(rpm){ const n = Math.max(0, rpm||0); return VIS_W_MAX*(1-Math.exp(-n/VIS_N_REF)); }
+function wrapAng(a){ const T = Math.PI*2; a %= T; return a<0 ? a+T : a; }
+// 阶段：released(分离) → adjusting(调速, t₁) → closing(闭合, t₂) → engaged(锁止) → releasing(分离过程)
+// 动画时间轴按 SLOWMO 倍慢放（1ms 现实 = SLOWMO ms 仿真），便于观察几百毫秒量级的过程。
+const SLOWMO = 0.2;
+const anim = {
+  phase:'released', tPhase:0, tSim:0, lastTs:0, lastFrameAt:0,
+  angISG:0, angTM:0, angWheel:0, angGearOut:0,
+  nISG:0, nTM:0, gap:1, coil:0, torque:0,
+  trace:[],                    // [{t, delta, engage}] 结合过程曲线数据（仿真时间 ms）
+  tAdjust:0, tClose:0, delta0:0,
+  flow:0,                      // 流动动画相位（虚线偏移）
+  soc:80                       // 动力电池SOC(%)，仅示意
+};
+
+function driveModes(){
+  const rel = document.querySelector('input[name="modeRel"]:checked');
+  const eng = document.querySelector('input[name="modeEng"]:checked');
+  return {rel: rel?rel.value:'ev', eng: eng?eng.value:'parallel'};
+}
+
+// 根据P1+P3架构与当前结合/分离状态给出各路径流向：+1 正向输出，-1 反向/回馈，0 无
+// 机械：engIsg(发动机→ISG) clutch(ISG→TM) tmWheel(TM→车轮)；电：battIsg(电池→ISG) battTm(电池→TM)
+function flowState(){
+  const m = driveModes();
+  const f = {engIsg:0, clutch:0, tmWheel:0, battIsg:0, battTm:0, label:''};
+  const engaged = anim.phase==='engaged' || anim.phase==='closing';
+  if(anim.phase==='released' || anim.phase==='releasing'){
+    if(m.rel==='ev'){
+      f.battTm=1; f.tmWheel=1;
+      if(anim.nISG>0){ f.engIsg=1; f.label='纯电驱动：电池→TM→减速器→车轮；离合器分离，发动机带动ISG以设定转速旋转'; }
+      else { f.label='纯电驱动：电池→TM→减速器→车轮，发动机/ISG静止'; }
+    }
+    else { f.engIsg=1; f.battIsg=-1; f.battTm=1; f.tmWheel=1; f.label='增程发电：发动机→ISG发电→电池；电池→TM驱动车轮'; }
+  } else if(anim.phase==='adjusting'){
+    f.battIsg=1; f.battTm=1; f.tmWheel=1;
+    f.label='调速阶段：电池→ISG拖动调速使其与TM同步；电池→TM维持驱动';
+  } else if(engaged){
+    if(m.eng==='parallel'){
+      f.engIsg=1; f.clutch=1; f.tmWheel=1; f.battTm=1;
+      f.label='并联驱动：发动机→ISG→离合器→TM→车轮；电池→TM助力';
+    } else {
+      f.tmWheel=-1; f.clutch=-1; f.battTm=-1; f.battIsg=-1;
+      f.label='制动能量回收：车轮→TM→离合器→ISG，TM/ISG发电回馈电池';
+    }
+    if(anim.phase==='closing'){ f.clutch = f.clutch*anim.torque; }
+  }
+  return f;
+}
+
+function animTargets(){
+  const nTM = state.tm_vehicle, nISG0 = scenarioIsg();
+  const d = scenarioDelta();
+  const tAdjust = Math.max(calibPreMs(d), 1);
+  const tClose = Math.max(calibCloseMs(d, nISG0, nTM), 1);
+  return {nTM, nISG0, d, tAdjust, tClose};
+}
+
+function setSpeedInputsEnabled(on){
+  els.tm_vehicle.disabled = !on;
+  els.isg_vehicle.disabled = !on;
+}
+
+function animSetPhase(p){
+  anim.phase = p; anim.tPhase = 0;
+  if(p==='adjusting'){
+    const t = animTargets();
+    anim.tAdjust=t.tAdjust; anim.tClose=t.tClose; anim.delta0=t.d;
+    anim.tSim = 0; anim.trace = [{t:0, delta:t.d, engage:0}];
+    setSpeedInputsEnabled(false);
+  }
+  if(p==='released') setSpeedInputsEnabled(true);
+}
+
+function animStep(dtReal){
+  const dt = dtReal*SLOWMO;          // 仿真时间步长
+  const {nTM, nISG0} = animTargets();
+  anim.tPhase += dt;
+  anim.nTM = nTM;
+  if(anim.phase==='released'){
+    anim.nISG = nISG0; anim.gap = 1; anim.coil = 0; anim.torque = 0;
+  } else if(anim.phase==='adjusting'){
+    const k = Math.min(1, anim.tPhase/anim.tAdjust);
+    anim.nISG = nISG0 + (nTM-nISG0)*k;           // ISG 向 TM 转速靠拢
+    anim.gap = 1; anim.coil = 0; anim.torque = 0;
+    anim.tSim += dt;
+    anim.trace.push({t:anim.tSim, delta:Math.abs(nTM-anim.nISG), engage:0});
+    if(k>=1){ anim.tSim = anim.tAdjust; animSetPhase('closing'); }
+  } else if(anim.phase==='closing'){
+    const k = Math.min(1, anim.tPhase/anim.tClose);
+    anim.nISG = nTM;
+    anim.gap = 1-k; anim.coil = k; anim.torque = k;
+    anim.tSim += dt;
+    anim.trace.push({t:anim.tSim, delta:0, engage:k*100});
+    if(k>=1){ anim.tSim = anim.tAdjust+anim.tClose; anim.trace.push({t:anim.tSim, delta:0, engage:100}); animSetPhase('engaged'); }
+  } else if(anim.phase==='engaged'){
+    anim.nISG = nTM; anim.gap = 0; anim.coil = 1; anim.torque = 1;
+  } else if(anim.phase==='releasing'){
+    const k = Math.min(1, anim.tPhase/300);
+    anim.nISG = nTM + (nISG0-nTM)*k;
+    anim.gap = k; anim.coil = 1-k; anim.torque = 1-k;
+    if(k>=1) animSetPhase('released');
+  }
+  // 转角积分（比例缩放，避免高转速视觉闪烁；车轮转速按TM除以近似速比）
+  // 视觉转速：对真实转速做饱和映射，并限制单帧积分步长。
+  // 原先按转速线性映射，3000rpm时约0.38rad/帧，一旦帧率降到30fps(软件渲染)或TM转速升高，
+  // 每帧转角超过辐条/齿距的一半(奈奎斯特极限)，就会出现"车轮效应"——辐条、齿轮看起来倒转或跳变。
+  // 现在最大视觉角速度6rad/s、单帧步长≤45ms，任何帧率下每帧≤0.27rad，低于8齿齿轮的0.39rad极限。
+  // 画面上的转速读数仍是真实值，转盘只作快慢示意。
+  const dtAng = Math.min(dtReal, 45) / 1000;
+  const wISG = visOmega(anim.nISG), wTM = visOmega(anim.nTM);
+  anim.angISG     = wrapAng(anim.angISG + wISG*dtAng);
+  anim.angTM      = wrapAng(anim.angTM  + wTM*dtAng);
+  anim.angGearOut = wrapAng(anim.angGearOut - wTM*dtAng*8/14);   // 输出大齿轮独立积分，避免随输入角回绕而跳齿
+  anim.angWheel   = wrapAng(anim.angWheel + wTM*dtAng*0.35);
+  // 流动相位与SOC示意
+  anim.flow = (anim.flow + dtReal*0.04) % 780;   // 780×0.6=468=虚线周期18/12/13的最小公倍数，回绕时虚线不跳
+  const f = flowState();
+  let socRate; // %/ms，正=充电
+  if((anim.phase==='released'||anim.phase==='releasing') && driveModes().rel==='rex'){
+    // 增程发电：ISG转速高于TM时发电功率大于驱动功率，SOC上升；反之SOC缓慢下降
+    socRate = anim.nISG > anim.nTM ? +0.0002 : -0.000075;
+  } else {
+    const net = (f.battIsg + f.battTm);   // +放电 −充电
+    socRate = -net*0.00015;
+  }
+  anim.soc = Math.max(5, Math.min(98, anim.soc + socRate*dtReal));
+}
+
+function drawDisc(ctx, cx, cy, r, angle, color, label, rpm){
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.globalAlpha = 0.12; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.lineWidth = 3;
+  for(let i=0;i<6;i++){
+    const a = angle + i*Math.PI/3;
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(a)*r*0.25, cy+Math.sin(a)*r*0.25);
+    ctx.lineTo(cx+Math.cos(a)*r*0.85, cy+Math.sin(a)*r*0.85);
+    ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.16,0,Math.PI*2); ctx.fill();
+  ctx.font = '12px '+cssVar('--font-body'); ctx.textAlign='center';
+  ctx.fillStyle = cssVar('--ink');
+  ctx.fillText(label, cx, cy+r+18);
+  ctx.font = '12px '+cssVar('--font-mono'); ctx.fillStyle = cssVar('--muted');
+  ctx.fillText(rpm.toFixed(0)+' rpm', cx, cy+r+34);
+  ctx.restore();
+}
+
+// 发动机：缸体 + 4缸活塞/连杆/曲轴运动示意，曲轴转角随ISG(P1刚性连接)转角变化
+function drawEngine(ctx, x, cy, wBox, hBox, color, crank){
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5;
+  const y = cy - hBox/2;
+  const headH = hBox*0.16, boreTop = y+headH, boreH = hBox*0.46, crankY = y+hBox*0.86;
+  // 缸盖与缸体
+  ctx.globalAlpha = 0.10; ctx.fillRect(x, boreTop, wBox, hBox-headH); ctx.globalAlpha = 1;
+  ctx.strokeRect(x, boreTop, wBox, hBox-headH);
+  ctx.strokeRect(x+wBox*0.06, y, wBox*0.88, headH);
+  const n = 4, boreW = wBox*0.15, pitch = wBox*0.22, x0 = x + wBox*0.5 - pitch*1.5;
+  const R = boreH*0.22, L = boreH*0.55, pistonH = boreH*0.26;
+  const phases = [0, Math.PI, Math.PI, 0];
+  // 曲轴主轴线
+  ctx.beginPath(); ctx.moveTo(x+wBox*0.04, crankY); ctx.lineTo(x+wBox*0.96, crankY); ctx.stroke();
+  for(let i=0;i<n;i++){
+    const cx = x0 + i*pitch;
+    // 缸筒
+    ctx.globalAlpha = 0.55; ctx.strokeRect(cx-boreW/2, boreTop+4, boreW, boreH); ctx.globalAlpha = 1;
+    // 曲柄销
+    const th = crank + phases[i];
+    const px = cx + R*Math.sin(th), py = crankY - R*Math.cos(th);
+    // 活塞位置（曲柄连杆运动学，取竖直方向）
+    const dx = px - cx;
+    const rodY = py - Math.sqrt(Math.max(L*L - dx*dx, 1));
+    const pTop = rodY - pistonH*0.5;
+    // 连杆
+    ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(cx, rodY); ctx.stroke();
+    // 曲柄臂
+    ctx.beginPath(); ctx.moveTo(cx, crankY); ctx.lineTo(px, py); ctx.stroke();
+    ctx.lineWidth = 1.5;
+    // 活塞
+    ctx.globalAlpha = 0.85; ctx.fillRect(cx-boreW/2+1.5, pTop, boreW-3, pistonH); ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.arc(px, py, 2.2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, crankY, 2.2, 0, Math.PI*2); ctx.fill();
+  }
+  // 输出端皮带轮（随曲轴转）
+  const pr = hBox*0.14, pcx = x+wBox, pcy = cy;
+  ctx.beginPath(); ctx.arc(pcx, pcy, pr, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pcx+Math.cos(crank)*pr*0.8, pcy+Math.sin(crank)*pr*0.8); ctx.lineTo(pcx-Math.cos(crank)*pr*0.8, pcy-Math.sin(crank)*pr*0.8); ctx.stroke();
+  ctx.font='12px '+cssVar('--font-body'); ctx.fillStyle=cssVar('--ink'); ctx.textAlign='center';
+  ctx.fillText('发动机', x+wBox/2, cy+hBox/2+18);
+  ctx.restore();
+}
+
+// 齿轮：外齿廓 + 轮辐，rot 为当前转角
+function drawGear(ctx, cx, cy, r, teeth, color, rot){
+  ctx.save(); ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  const steps = teeth*4;
+  for(let i=0;i<=steps;i++){
+    const a = rot + i*Math.PI*2/steps;
+    const k = i%4; const rr = (k===0||k===1) ? r : r*0.82;
+    const px = cx+Math.cos(a)*rr, py = cy+Math.sin(a)*rr;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+  ctx.globalAlpha=0.10; ctx.fill(); ctx.globalAlpha=1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.22,0,Math.PI*2); ctx.stroke();
+  for(let i=0;i<4;i++){
+    const a = rot + i*Math.PI/2;
+    ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*r*0.25, cy+Math.sin(a)*r*0.25); ctx.lineTo(cx+Math.cos(a)*r*0.7, cy+Math.sin(a)*r*0.7); ctx.stroke();
+  }
+  ctx.restore();
+}
+// 减速器/差速器：输入小齿轮(随TM转)与输出大齿轮啮合反向转动，转速比 = 齿数比
+function drawReducer(ctx, cx, cy, size, color, angIn, angOutAcc){
+  const zIn = 8, zOut = 14;
+  const rIn = size*0.26, rOut = size*0.46;
+  const dist = (rIn + rOut)*0.9;               // 啮合中心距（按节圆近似）
+  const ang = Math.atan2(0.35, 0.94);
+  const inCx = cx + dist*0.5*Math.cos(ang), inCy = cy + dist*0.5*Math.sin(ang);
+  const outCx = cx - dist*0.5*Math.cos(ang), outCy = cy - dist*0.5*Math.sin(ang);
+  const angOut = (angOutAcc||0) + Math.PI/zOut;    // 输出齿轮转角独立积分(反向、按齿比减速)，并错开半齿以便啮合
+  drawGear(ctx, outCx, outCy, rOut, zOut, color, angOut);
+  drawGear(ctx, inCx, inCy, rIn, zIn, color, angIn);
+  ctx.save(); ctx.font='12px '+cssVar('--font-body'); ctx.fillStyle=cssVar('--ink'); ctx.textAlign='center';
+  ctx.fillText('减速器/差速器', cx, cy+size*0.62+18); ctx.restore();
+}
+
+// 静态部件：车轮（轮胎+轮辋+辐条）
+function drawWheel(ctx, cx, cy, r, color, angle){
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.lineWidth = r*0.28;
+  ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.arc(cx,cy,r*0.86,0,Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = 1; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.72,0,Math.PI*2); ctx.stroke();
+  for(let i=0;i<5;i++){
+    const a = angle + i*Math.PI*2/5;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a)*r*0.7, cy+Math.sin(a)*r*0.7); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.12,0,Math.PI*2); ctx.fill();
+  ctx.font='12px '+cssVar('--font-body'); ctx.fillStyle=cssVar('--ink'); ctx.textAlign='center';
+  ctx.fillText('车轮', cx, cy+r+18);
+  ctx.restore();
+}
+
+// 动力电池：壳体+正极凸台+SOC电量条
+function drawBattery(ctx, x, y, w, h, soc, color){
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.10; ctx.fillRect(x, y, w, h); ctx.globalAlpha = 1;
+  ctx.strokeRect(x, y, w, h);
+  ctx.fillRect(x+w, y+h*0.3, 6, h*0.4);                    // 正极凸台
+  const inner = 4, cells = 4, gap = 3;
+  const cw = (w-inner*2-gap*(cells-1))/cells;
+  const lit = Math.round(soc/100*cells*10)/10;
+  for(let i=0;i<cells;i++){
+    const fill = Math.max(0, Math.min(1, lit-i));
+    ctx.globalAlpha = 0.18; ctx.fillRect(x+inner+i*(cw+gap), y+inner, cw, h-inner*2);
+    ctx.globalAlpha = 0.85; ctx.fillRect(x+inner+i*(cw+gap), y+inner, cw*fill, h-inner*2);
+  }
+  ctx.globalAlpha = 1;
+  ctx.font='12px '+cssVar('--font-body'); ctx.fillStyle=cssVar('--ink'); ctx.textAlign='center';
+  ctx.fillText('动力电池', x+w/2, y+h+16);
+  ctx.font='11px '+cssVar('--font-mono'); ctx.fillStyle=cssVar('--muted');
+  ctx.fillText('SOC '+soc.toFixed(0)+'%', x+w/2, y+h+30);
+  ctx.restore();
+}
+
+// 沿折线绘制流动虚线与方向箭头；dir=+1 沿点序方向，-1 反向；0 不画
+function drawFlow(ctx, pts, dir, color, width, dash){
+  if(!dir) return;
+  const sgn = dir>0?1:-1;
+  const strength = Math.min(1, Math.abs(dir));
+  ctx.save();
+  ctx.globalAlpha = 0.35 + 0.65*strength;
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  ctx.setLineDash(dash); ctx.lineDashOffset = -sgn*anim.flow*0.6;
+  ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+  ctx.setLineDash([]);
+  // 在最长一段的中点画箭头
+  let best=0, bi=0;
+  for(let i=0;i<pts.length-1;i++){ const L=Math.hypot(pts[i+1][0]-pts[i][0], pts[i+1][1]-pts[i][1]); if(L>best){best=L; bi=i;} }
+  const a=pts[bi], b=pts[bi+1];
+  const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+  let ang = Math.atan2(b[1]-a[1], b[0]-a[0]); if(sgn<0) ang += Math.PI;
+  ctx.fillStyle = color; ctx.translate(mx,my); ctx.rotate(ang);
+  ctx.beginPath(); ctx.moveTo(7,0); ctx.lineTo(-5,-5); ctx.lineTo(-5,5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawAnim(){
+  const canvas = document.getElementById('animCanvas');
+  if(!canvas) return;
+  const cv = setupCanvas(canvas); if(!cv) return;
+  const {ctx,w,h} = cv;
+  ctx.clearRect(0,0,w,h);
+  const muted=cssVar('--muted'), accent=cssVar('--accent'), border=cssVar('--border');
+  const isgColor = cssVar('--cat-teal'), tmColor = cssVar('--measured'), steel = cssVar('--muted');
+  const mechColor = cssVar('--cat-teal'), dischColor = cssVar('--warn'), chargeColor = cssVar('--cat-purple');
+  const cy = h*0.34;
+  const r = Math.min(h*0.17, w*0.075);
+  const gapPx = 16 + anim.gap*22;
+  const cxISG = w*0.42 - gapPx - r, cxTM = w*0.42 + gapPx + r;
+  const engW = Math.min(w*0.13, 110), engH = r*2.2, engX = w*0.03;
+  const redSize = r*1.6, redCx = w*0.72;
+  const wheelR = r*0.95, wheelCx = w*0.92;
+  const battW = Math.min(w*0.16, 130), battH = 34, battX = w*0.42 - battW/2, battY = h*0.64;
+
+  // 轴线
+  ctx.strokeStyle = border; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(engX+engW, cy); ctx.lineTo(cxISG-r, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cxTM+r, cy); ctx.lineTo(redCx-redSize*0.85, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(redCx+redSize*0.6, cy); ctx.lineTo(wheelCx-wheelR, cy); ctx.stroke();
+
+  drawEngine(ctx, engX, cy, engW, engH, steel, anim.angISG);
+  drawReducer(ctx, redCx, cy, redSize, steel, anim.angTM, anim.angGearOut);
+  drawWheel(ctx, wheelCx, cy, wheelR, steel, anim.angWheel);
+  drawBattery(ctx, battX, battY, battW, battH, anim.soc, steel);
+
+  // 电气连线（电池 ↔ ISG / TM），静态底线
+  const busY = battY - 22;
+  const isgBus = [[cxISG, cy+r+40],[cxISG, busY],[battX+battW*0.25, busY],[battX+battW*0.25, battY]];
+  const tmBus  = [[cxTM,  cy+r+40],[cxTM,  busY],[battX+battW*0.75, busY],[battX+battW*0.75, battY]];
+  ctx.strokeStyle = border; ctx.lineWidth = 2;
+  [isgBus, tmBus].forEach(pts=>{ ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); });
+
+  // 流向
+  const f = flowState();
+  // 机械动力流（沿轴线，正向=向车轮）
+  drawFlow(ctx, [[engX+engW+4, cy],[cxISG-r-2, cy]], f.engIsg, mechColor, 4, [10,8]);
+  if(f.clutch) drawFlow(ctx, [[cxISG+r*0.9, cy],[cxTM-r*0.9, cy]], f.clutch, mechColor, 4, [6,6]);
+  drawFlow(ctx, [[cxTM+r+2, cy],[redCx-redSize*0.85-2, cy]], f.tmWheel, mechColor, 4, [10,8]);
+  drawFlow(ctx, [[redCx+redSize*0.6+2, cy],[wheelCx-wheelR-2, cy]], f.tmWheel, mechColor, 4, [10,8]);
+  // 电能流：点序为 电机→电池，因此 电池→电机(放电) 用 -1，电机→电池(充电) 用 +1
+  if(f.battIsg) drawFlow(ctx, isgBus, -f.battIsg, f.battIsg>0?dischColor:chargeColor, 2.5, [7,6]);
+  if(f.battTm)  drawFlow(ctx, tmBus,  -f.battTm,  f.battTm>0 ?dischColor:chargeColor, 2.5, [7,6]);
+
+  // 线圈
+  const coilW = 12, coilH = r*1.5, coilX = (cxISG+cxTM)/2;
+  ctx.save(); ctx.globalAlpha = 0.25 + anim.coil*0.75; ctx.fillStyle = accent;
+  ctx.fillRect(coilX-coilW/2, cy-coilH/2, coilW, coilH); ctx.restore();
+  ctx.strokeStyle = accent; ctx.lineWidth=1.5; ctx.strokeRect(coilX-coilW/2, cy-coilH/2, coilW, coilH);
+  ctx.font='11px '+cssVar('--font-body'); ctx.fillStyle=muted; ctx.textAlign='center';
+  ctx.fillText('电磁线圈', coilX, cy-coilH/2-8);
+  ctx.fillText(anim.coil>0.5?'通电':'断电', coilX, cy+coilH/2+14);
+
+  // 摩擦片
+  ctx.fillStyle = isgColor; ctx.fillRect(cxISG+r*0.9, cy-r*0.8, 5, r*1.6);
+  ctx.fillStyle = tmColor;  ctx.fillRect(cxTM-r*0.9-5, cy-r*0.8, 5, r*1.6);
+
+  drawDisc(ctx, cxISG, cy, r, anim.angISG, isgColor, 'ISG (P1)', anim.nISG);
+  drawDisc(ctx, cxTM, cy, r, anim.angTM, tmColor, 'TM (P3)', anim.nTM);
+
+  // 工作模式说明
+  ctx.font='12px '+cssVar('--font-body'); ctx.fillStyle=cssVar('--ink'); ctx.textAlign='left';
+  ctx.fillText(f.label, w*0.03, h-30);
+
+  // 阶段进度条
+  const active = anim.phase==='adjusting'||anim.phase==='closing'||anim.phase==='engaged';
+  const {tAdjust, tClose} = active ? {tAdjust:anim.tAdjust, tClose:anim.tClose} : animTargets();
+  const total = tAdjust + tClose;
+  const barY = h-12, barX = w*0.03, barW = w*0.94;
+  ctx.fillStyle = cssVar('--surface-2'); ctx.fillRect(barX, barY, barW, 7);
+  let doneMs = 0;
+  if(anim.phase==='adjusting') doneMs = Math.min(anim.tPhase, tAdjust);
+  else if(anim.phase==='closing') doneMs = tAdjust + Math.min(anim.tPhase, tClose);
+  else if(anim.phase==='engaged') doneMs = total;
+  const wAdj = barW*tAdjust/total;
+  ctx.fillStyle = isgColor; ctx.fillRect(barX, barY, Math.min(doneMs,tAdjust)/total*barW, 7);
+  if(doneMs>tAdjust){ ctx.fillStyle = accent; ctx.fillRect(barX+wAdj, barY, (doneMs-tAdjust)/total*barW, 7); }
+  ctx.strokeStyle = border; ctx.lineWidth=1; ctx.strokeRect(barX, barY, barW, 7);
+}
+
+// 结合过程曲线：横轴时间(ms)，左轴速差(rpm)，右轴结合度(%)，随动画逐点绘制
+let _curveSig = '', _themeEpoch = 0;
+function drawAnimCurve(){
+  const canvas = document.getElementById('animCurveCanvas');
+  if(!canvas) return;
+  const cv = setupCanvas(canvas); if(!cv) return;
+  const {ctx,w,h} = cv;
+  const active = anim.phase==='adjusting'||anim.phase==='closing'||anim.phase==='engaged';
+  const tgt = active ? {tAdjust:anim.tAdjust, tClose:anim.tClose, d:anim.delta0} : animTargets();
+  // 曲线只在数据/尺寸/主题变化时重绘；静止时每帧重画整张图没有意义，还会加重软件渲染机器的负担
+  const sig = [cv.epoch, _themeEpoch, w, anim.phase, anim.trace.length,
+               tgt.tAdjust.toFixed(1), tgt.tClose.toFixed(1), tgt.d.toFixed(0)].join('|');
+  if(sig === _curveSig) return;
+  _curveSig = sig;
+  ctx.clearRect(0,0,w,h);
+  const muted=cssVar('--muted'), ink=cssVar('--ink'), grid=cssVar('--grid'), border=cssVar('--border');
+  const measured=cssVar('--measured'), accent=cssVar('--accent');
+  const total = tgt.tAdjust + tgt.tClose;
+  const padL=64, padR=56, padT=18, padB=44;
+  const plotW=w-padL-padR, plotH=h-padT-padB;
+  const xMax = Math.max(total*1.05, 10);
+  const yMax = Math.max(tgt.d*1.1, 10);
+  const X = t => padL + t/xMax*plotW;
+  const Y = v => padT + plotH - v/yMax*plotH;
+  const Y2 = v => padT + plotH - v/100*plotH;
+
+  ctx.font="11px "+cssVar('--font-mono'); ctx.strokeStyle=grid; ctx.lineWidth=1;
+  niceTicks(0,yMax,4).filter(v=>v>=0&&v<=yMax).forEach(v=>{
+    const y=Y(v); ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+    ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillStyle=measured; ctx.fillText(v.toFixed(0), padL-8, y);
+  });
+  [0,25,50,75,100].forEach(v=>{ ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillStyle=accent; ctx.fillText(v+'%', padL+plotW+8, Y2(v)); });
+  niceTicks(0,xMax,6).filter(v=>v>=0&&v<=xMax).forEach(v=>{
+    ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle=muted; ctx.fillText(v.toFixed(0), X(v), padT+plotH+6);
+  });
+  ctx.strokeStyle=border; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.lineTo(padL+plotW,padT); ctx.stroke();
+
+  // 闭合阶段底色 + 阶段分界线
+  ctx.save(); ctx.globalAlpha=0.08; ctx.fillStyle=accent; ctx.fillRect(X(tgt.tAdjust), padT, X(total)-X(tgt.tAdjust), plotH); ctx.restore();
+  ctx.save(); ctx.strokeStyle=muted; ctx.lineWidth=1; ctx.font='11px '+cssVar('--font-body'); ctx.textBaseline='top';
+  [[tgt.tAdjust,'t₁ 调速时间 '+tgt.tAdjust.toFixed(0)+'ms'],[total,'t₁+t₂ 完整结合时间 '+total.toFixed(0)+'ms']].forEach(([t,lab],i)=>{
+    const x=X(t);
+    ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=ink; ctx.textAlign='right'; ctx.fillText(lab, x-4, padT+2+i*14);
+  });
+  ctx.restore();
+
+  if(anim.trace.length>1){
+    ctx.lineWidth=2.5; ctx.strokeStyle=measured; ctx.beginPath();
+    anim.trace.forEach((p,i)=>{ const x=X(p.t), y=Y(p.delta); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+    ctx.stroke();
+    ctx.strokeStyle=accent; ctx.beginPath();
+    anim.trace.forEach((p,i)=>{ const x=X(p.t), y=Y2(p.engage); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+    ctx.stroke();
+    const last = anim.trace[anim.trace.length-1];
+    ctx.fillStyle=measured; ctx.beginPath(); ctx.arc(X(last.t),Y(last.delta),3.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=accent; ctx.beginPath(); ctx.arc(X(last.t),Y2(last.engage),3.5,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.font='12px '+cssVar('--font-body'); ctx.fillStyle=muted; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('点击"结合"开始绘制', padL+plotW/2, padT+plotH/2);
+  }
+
+  ctx.fillStyle=ink; ctx.font='12px '+cssVar('--font-body'); ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.fillText('时间 (ms)', padL+plotW/2, h-6);
+  ctx.save(); ctx.translate(14, padT+plotH/2); ctx.rotate(-Math.PI/2); ctx.fillStyle=measured; ctx.fillText('速差 Δω (rpm)',0,0); ctx.restore();
+  ctx.save(); ctx.translate(w-6, padT+plotH/2); ctx.rotate(Math.PI/2); ctx.fillStyle=accent; ctx.fillText('结合度 (%)',0,0); ctx.restore();
+}
+
+const PHASE_LABEL = {released:'分离（可调整ISG/TM转速）', adjusting:'调速阶段 t₁', closing:'闭合阶段 t₂', engaged:'Engaged（已结合）', releasing:'分离过程'};
+
+// 状态栏：原先每帧整体改写 innerHTML，文字长度随阶段/数值变化导致换行位置改变，
+// 下方所有内容随之上下跳动。现为固定结构 + 固定宽度字段，只改变化了的文本，且限频10Hz。
+const _stCache = {};
+let _stLastAt = 0;
+function setStat(id, text){
+  if(_stCache[id] === text) return;
+  _stCache[id] = text;
+  const el = document.getElementById(id); if(el) el.textContent = text;
+}
+function updateAnimStatus(force){
+  const now = performance.now();
+  if(!force && now - _stLastAt < 100) return;
+  _stLastAt = now;
+  const active = anim.phase==='adjusting'||anim.phase==='closing'||anim.phase==='engaged';
+  const tgt = active ? {tAdjust:anim.tAdjust, tClose:anim.tClose, d:anim.delta0} : animTargets();
+  const elapsed = active ? Math.min(anim.tSim, tgt.tAdjust+tgt.tClose) : 0;
+  setStat('stPhase',   PHASE_LABEL[anim.phase]);
+  setStat('stElapsed', elapsed.toFixed(0)+' ms');
+  setStat('stT1',      tgt.tAdjust.toFixed(0)+' ms');
+  setStat('stT2',      tgt.tClose.toFixed(0)+' ms');
+  setStat('stTot',     (tgt.tAdjust+tgt.tClose).toFixed(0)+' ms');
+  setStat('stIsg',     scenarioIsg()+' rpm');
+  setStat('stTm',      state.tm_vehicle+' rpm');
+  setStat('stD',       tgt.d.toFixed(0)+' rpm');
+  setStat('stSoc',     anim.soc.toFixed(1)+' %');
+}
+
+let _rafId = 0;
+function animFrame(dt){
+  animStep(dt);
+  drawAnim();
+  drawAnimCurve();
+  updateAnimStatus();
+}
+let LOW_POWER = detectSoftwareRendering();      // chrome://gpu 显示 "Software only" 的机器
+let _frameCostAvg = 0, _lastDrawAt = 0;
+function animLoop(ts){
+  const now = (ts===undefined) ? performance.now() : ts;
+  const minInterval = LOW_POWER ? 33 : 0;       // 软件渲染：稳定30fps，比掉帧的"60fps"更平顺
+  if(now - _lastDrawAt >= minInterval - 1){
+    const dt = anim.lastTs ? Math.min(now-anim.lastTs, 100) : 16;
+    anim.lastTs = now; _lastDrawAt = now;
+    anim.lastFrameAt = performance.now();
+    const t0 = performance.now();
+    animFrame(dt);
+    _frameCostAvg = _frameCostAvg*0.95 + (performance.now()-t0)*0.05;
+    if(!LOW_POWER && _frameCostAvg > 12) LOW_POWER = true;   // 实测绘制过慢时自动降档
+  }
+  _rafId = window.requestAnimationFrame(animLoop);
+}
+// rAF 在个别Windows/Chrome组合下（合成器停顿、后台标签恢复）可能长时间不回调，
+// 导致动画停在空白/旧帧；这里用定时器做兜底心跳，检测到停顿就补一帧并重启循环。
+function animHeartbeat(){
+  if(document.hidden) return;
+  const idle = performance.now() - (anim.lastFrameAt||0);
+  if(idle > 1500){
+    anim.lastTs = 0;
+    animFrame(16);
+    if(_rafId) window.cancelAnimationFrame(_rafId);
+    _rafId = window.requestAnimationFrame(animLoop);
+  }
+}
+setInterval(animHeartbeat, 1000);
+
+function setActiveBtn(id){
+  ['animEngageBtn','animReleaseBtn','animResetBtn'].forEach(b=>document.getElementById(b).classList.toggle('active', b===id));
+}
+document.getElementById('animEngageBtn').addEventListener('click', ()=>{
+  if(anim.phase==='released'){ animSetPhase('adjusting'); setActiveBtn('animEngageBtn'); }
+});
+document.getElementById('animReleaseBtn').addEventListener('click', ()=>{
+  if(anim.phase==='engaged'||anim.phase==='closing'||anim.phase==='adjusting'){ animSetPhase('releasing'); setActiveBtn('animReleaseBtn'); }
+});
+const SOC_DEFAULT = 80;
+document.getElementById('animResetBtn').addEventListener('click', ()=>{
+  anim.trace = []; anim.tSim = 0; anim.soc = SOC_DEFAULT;
+  els.isg_vehicle.value = DEFAULTS.isg_vehicle; els.tm_vehicle.value = DEFAULTS.tm_vehicle;
+  animSetPhase('released');
+  setActiveBtn('animResetBtn');
+  render();
+});
+// 纯电驱动工况下ISG静止，禁用其滑块；切换工况时同步
+function syncIsgSlider(){
+  const ev = driveModes().rel==='ev';
+  const inRel = anim.phase==='released';
+  els.isg_vehicle.disabled = !inRel;
+  const hint = els.isg_vehicle.parentElement.querySelector('.hint');
+  if(hint) hint.textContent = ev ? 'rpm · P1/ISG侧（纯电驱动时设为0表示发动机/ISG静止）' : 'rpm · P1/ISG侧（增程发电时由发动机带动）';
+  render();
+}
+document.querySelectorAll('input[name="modeRel"],input[name="modeEng"]').forEach(r=>r.addEventListener('change', syncIsgSlider));
+
+let _renderQueued = false;
+function scheduleRender(){
+  if(_renderQueued) return;
+  _renderQueued = true;
+  window.requestAnimationFrame(()=>{ _renderQueued = false; render(); });
+}
+
+ids.forEach(id=>{
+  els[id].addEventListener('input', scheduleRender);
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  ids.forEach(id=>{ els[id].value = DEFAULTS[id]; });
+  render();
+});
+
+document.getElementById('autoCalBtn').addEventListener('click', ()=>{
+  autoCalibrate();
+  render();
+});
+
+// redraw on OS theme change (colors read live via cssVar, just need repaint)
+const mq = window.matchMedia('(prefers-color-scheme: dark)');
+mq.addEventListener('change', ()=>{ _themeEpoch++; scheduleRender(); });
+window.addEventListener('resize', invalidateAllCanvases);   // 缩放/改变窗口大小时全部画布重新量测
+
+autoCalibrate();
+render();
+syncIsgSlider();
+window.requestAnimationFrame(animLoop);
+})();
+</script>
