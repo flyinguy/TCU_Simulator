@@ -9,7 +9,7 @@
     1) 读取 version.txt 中的当前版本号（如 1.0）
     2) 用该版本号渲染 app_template.html -> app.html（替换 {{VERSION}}）
     3) 调用 PyInstaller 打包成单文件exe：dist_exe/电磁离合器仿真台_V{当前版本}.exe
-    4) 把本次更新说明追加写入 CHANGELOG.md（版本号=本次构建使用的版本，即"当前版本"）
+    4) 把本次更新说明插入到 ../update.log 标题下方（最新版本在最上面；版本号=本次构建使用的版本）
     5) 将 version.txt 中的版本号自动+0.1，供下一次构建使用（1.0 -> 1.1 -> 1.2 ...）
 
 即：第一次运行时 version.txt=1.0，产出 V1.0 的exe与changelog条目，
@@ -23,7 +23,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 VERSION_FILE = os.path.join(HERE, "version.txt")
-CHANGELOG_FILE = os.path.join(HERE, "..", "CHANGELOG.md")
+CHANGELOG_FILE = os.path.join(HERE, "..", "update.log")
 TEMPLATE_FILE = os.path.join(HERE, "app_template.html")
 RENDERED_HTML = os.path.join(HERE, "app.html")
 APP_ENTRY = os.path.join(HERE, "app.py")
@@ -78,16 +78,24 @@ def run_pyinstaller(exe_name):
     subprocess.run(cmd, check=True, cwd=HERE)
 
 
-def append_changelog(version_tag, description, exe_name):
+def prepend_changelog(version_tag, description, exe_name):
+    """新条目插入到标题行之后，保持"最新版本在最上面"的顺序；文件统一使用CRLF换行。"""
     today = datetime.date.today().isoformat()
-    entry = f"\n## {version_tag} - {today}\n\n{description.strip()}\n\n" \
+    entry = f"## {version_tag} - {today}\n\n{description.strip()}\n\n" \
             f"- 产出文件: `dist_exe/{exe_name}.exe`\n"
-    if not os.path.exists(CHANGELOG_FILE):
-        header = "# 电磁离合器仿真台 - 版本更新日志\n"
-        with open(CHANGELOG_FILE, "w", encoding="utf-8") as f:
-            f.write(header)
-    with open(CHANGELOG_FILE, "a", encoding="utf-8") as f:
-        f.write(entry)
+    header = "# 电磁离合器仿真台 - 版本更新日志\n"
+    body = ""
+    if os.path.exists(CHANGELOG_FILE):
+        with open(CHANGELOG_FILE, "r", encoding="utf-8") as f:
+            old = f.read()
+        if old.startswith("# "):
+            first, _, body = old.partition("\n")
+            header = first + "\n"
+        else:
+            body = old
+    content = header + "\n" + entry + ("\n" + body.lstrip("\n") if body.strip() else "")
+    with open(CHANGELOG_FILE, "w", encoding="utf-8", newline="\r\n") as f:
+        f.write(content)
 
 
 def main():
@@ -107,10 +115,10 @@ def main():
     run_pyinstaller(exe_name)
     print(f"[3/4] 打包完成: dist_exe/{exe_name}.exe")
 
-    append_changelog(version_tag, description, exe_name)
+    prepend_changelog(version_tag, description, exe_name)
     next_version = bump_version(current_version)
     write_version(next_version)
-    print(f"[4/4] 更新日志已写入 CHANGELOG.md；version.txt 已更新为下一版本号 {next_version}")
+    print(f"[4/4] 更新日志已写入 update.log；version.txt 已更新为下一版本号 {next_version}")
 
 
 if __name__ == "__main__":

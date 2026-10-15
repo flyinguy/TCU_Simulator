@@ -202,7 +202,7 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .anim-card{margin-bottom:20px;}
 .anim-controls{display:flex;gap:8px;}
-.anim-inputs{display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;margin:4px 0 10px;}
+.anim-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 28px;margin:4px 0 10px;}
 @media (max-width:700px){.anim-inputs{grid-template-columns:1fr;}}
 .anim-inputs .field{margin-bottom:0;}
 .anim-inputs input[disabled]{opacity:.45;cursor:not-allowed;}
@@ -256,7 +256,7 @@ html{scrollbar-gutter:stable;}
         <button class="btn anim-btn" id="animResetBtn">↺ 复位</button>
       </span>
     </h3>
-    <p class="desc">结合前可分别设定ISG与TM的转速（速差Δω = |n_TM − n_ISG|）。点击"结合"后依次进入 <b>调速阶段</b>（ISG向TM转速靠拢，历时t₁）→ <b>闭合阶段</b>（线圈通电、气隙闭合、扭矩建立，历时t₂）→ <b>Engaged</b>（两侧锁止同速）；t₁、t₂ 由台架测试数据回归公式计算，完整结合时间 = t₁ + t₂。</p>
+    <p class="desc">结合前可分别设定ISG与TM的转速（速差Δω = |n_TM − n_ISG|）。点击"结合"后依次进入 <b>调速阶段</b>（ISG向TM转速靠拢，历时t₁）→ <b>闭合阶段</b>（线圈通电、气隙闭合、扭矩建立，历时t₂）→ <b>Engaged</b>（两侧锁止同速）；t₁、t₂ 由台架测试数据回归公式计算，完整结合时间 = t₁ + t₂。结合后可选 <b>智能补电</b>（发动机直驱，SOC≤30%时GCU将ISG切换为发电模式补电，SOC≥40%停止）或 <b>GCU辅助驱动</b>（ISG作电动机与发动机、TM共同驱动，SOC≤20%时自动退出，转为并联驱动）。</p>
     <div class="anim-inputs">
       <div class="field">
         <div class="field-head"><label for="isg_vehicle">结合前 ISG 转速</label><span class="val" id="isg_vehicle_v"></span></div>
@@ -268,6 +268,11 @@ html{scrollbar-gutter:stable;}
         <input type="range" id="tm_vehicle" min="0" max="10000" step="50" value="3000">
         <div class="hint">rpm · P3/TM输出侧</div>
       </div>
+      <div class="field">
+        <div class="field-head"><label for="soc_now">动力电池 SOC</label><span class="val" id="soc_now_v"></span></div>
+        <input type="range" id="soc_now" min="5" max="98" step="1" value="80">
+        <div class="hint">% · 可随时拖动设定，用于观察智能补电/GCU辅助驱动的SOC门限</div>
+      </div>
     </div>
     <div class="anim-modes">
       <div class="mode-group">
@@ -278,6 +283,8 @@ html{scrollbar-gutter:stable;}
       <div class="mode-group">
         <span class="mode-label">结合状态工作模式</span>
         <label><input type="radio" name="modeEng" value="parallel" checked> 发动机直驱+电机助力</label>
+        <label><input type="radio" name="modeEng" value="smartcharge"> 智能补电</label>
+        <label><input type="radio" name="modeEng" value="gcuassist"> GCU辅助驱动</label>
         <label><input type="radio" name="modeEng" value="regen"> 制动能量回收</label>
       </div>
       <div class="mode-group flow-legend">
@@ -298,6 +305,7 @@ html{scrollbar-gutter:stable;}
       <span class="st-item"><span class="st-k">n_TM</span><b class="st-v" id="stTm" style="min-width:9ch"></b></span>
       <span class="st-item"><span class="st-k">Δω</span><b class="st-v" id="stD" style="min-width:9ch"></b></span>
       <span class="st-item"><span class="st-k">SOC</span><b class="st-v" id="stSoc" style="min-width:7ch"></b></span>
+      <span class="st-item"><span class="st-k">ISG(GCU)</span><b class="st-v" id="stGcu" style="min-width:6ch"></b></span>
     </div>
     <div class="anim-curve-head">
       <span>结合过程曲线（横轴：时间 ms）</span>
@@ -1146,8 +1154,11 @@ const anim = {
   trace:[],                    // [{t, delta, engage}] 结合过程曲线数据（仿真时间 ms）
   tAdjust:0, tClose:0, delta0:0,
   flow:0,                      // 流动动画相位（虚线偏移）
-  soc:80                       // 动力电池SOC(%)，仅示意
+  soc:80,                      // 动力电池SOC(%)，仅示意
+  charging:false               // 智能补电滞环状态：true=ISG正在发电补电
 };
+// 智能补电：SOC≤下限启动补电、≥上限停止（滞环，避免频繁启停）；GCU辅助驱动：SOC≤下限禁止ISG电动助力
+const SMART_CHG_ON = 30, SMART_CHG_OFF = 40, GCU_ASSIST_MIN_SOC = 20;
 
 function driveModes(){
   const rel = document.querySelector('input[name="modeRel"]:checked');
@@ -1159,27 +1170,49 @@ function driveModes(){
 // 机械：engIsg(发动机→ISG) clutch(ISG→TM) tmWheel(TM→车轮)；电：battIsg(电池→ISG) battTm(电池→TM)
 function flowState(){
   const m = driveModes();
-  const f = {engIsg:0, clutch:0, tmWheel:0, battIsg:0, battTm:0, label:''};
+  const f = {engIsg:0, clutch:0, tmWheel:0, battIsg:0, battTm:0, label:'', gcu:''};
   const engaged = anim.phase==='engaged' || anim.phase==='closing';
   if(anim.phase==='released' || anim.phase==='releasing'){
     if(m.rel==='ev'){
       f.battTm=1; f.tmWheel=1;
-      if(anim.nISG>0){ f.engIsg=1; f.label='纯电驱动：电池→TM→减速器→车轮；离合器分离，发动机带动ISG以设定转速旋转'; }
-      else { f.label='纯电驱动：电池→TM→减速器→车轮，发动机/ISG静止'; }
+      if(anim.nISG>0){ f.engIsg=1; f.gcu='随转'; f.label='纯电驱动：电池→TM→减速器→车轮；离合器分离，发动机带动ISG以设定转速旋转'; }
+      else { f.gcu='静止'; f.label='纯电驱动：电池→TM→减速器→车轮，发动机/ISG静止'; }
     }
-    else { f.engIsg=1; f.battIsg=-1; f.battTm=1; f.tmWheel=1; f.label='增程发电：发动机→ISG发电→电池；电池→TM驱动车轮'; }
+    else { f.engIsg=1; f.battIsg=-1; f.battTm=1; f.tmWheel=1; f.gcu='发电'; f.label='增程发电：发动机→ISG发电→电池；电池→TM驱动车轮'; }
   } else if(anim.phase==='adjusting'){
-    f.battIsg=1; f.battTm=1; f.tmWheel=1;
-    f.label='调速阶段：电池→ISG拖动调速使其与TM同步；电池→TM维持驱动';
+    f.battIsg=1; f.battTm=1; f.tmWheel=1; f.gcu='调速';
+    f.label='调速阶段：GCU控制电池→ISG拖动调速使其与TM同步；电池→TM维持驱动';
   } else if(engaged){
-    if(m.eng==='parallel'){
-      f.engIsg=1; f.clutch=1; f.tmWheel=1; f.battTm=1;
-      f.label='并联驱动：发动机→ISG→离合器→TM→车轮；电池→TM助力';
+    const gcuBlocked = m.eng==='gcuassist' && anim.soc<=GCU_ASSIST_MIN_SOC;
+    if(m.eng==='parallel' || gcuBlocked){
+      f.engIsg=1; f.clutch=1; f.tmWheel=1; f.battTm=1; f.gcu='随转';
+      f.label = gcuBlocked
+        ? 'GCU辅助驱动已退出(SOC≤'+GCU_ASSIST_MIN_SOC+'%)：转为并联驱动，发动机→离合器→TM→车轮；电池→TM助力'
+        : '并联驱动：发动机→ISG→离合器→TM→车轮；电池→TM助力';
+    } else if(m.eng==='smartcharge'){
+      // 发动机直驱车轮，TM不出力；SOC低时GCU把ISG切换到发电模式，发动机提高负荷补电
+      f.engIsg=1; f.clutch=1; f.tmWheel=1;
+      if(anim.charging){
+        f.battIsg=-1; f.gcu='发电';
+        f.label='智能补电(SOC≤'+SMART_CHG_ON+'%触发)：发动机→离合器→车轮直驱，多余功率经ISG发电→电池，SOC≥'+SMART_CHG_OFF+'%时停止';
+      } else {
+        f.gcu='随转';
+        f.label='智能补电待机：SOC>'+SMART_CHG_ON+'%不补电，发动机→离合器→TM→车轮直驱；SOC≤'+SMART_CHG_ON+'%时GCU自动切换ISG发电';
+      }
+    } else if(m.eng==='gcuassist'){
+      // 三动力源：发动机 + ISG(GCU电动模式) 经离合器传至输出轴，TM(MCU)同时驱动
+      f.engIsg=1; f.clutch=1; f.tmWheel=1; f.battIsg=1; f.battTm=1; f.gcu='助力';
+      f.label='GCU辅助驱动：发动机+ISG(电池→ISG电动)→离合器→TM→车轮；电池→TM同时驱动，三动力源输出';
     } else {
       f.tmWheel=-1; f.clutch=-1; f.battTm=-1; f.battIsg=-1;
+      f.gcu='发电';
       f.label='制动能量回收：车轮→TM→离合器→ISG，TM/ISG发电回馈电池';
     }
-    if(anim.phase==='closing'){ f.clutch = f.clutch*anim.torque; }
+    if(anim.phase==='closing'){
+      // 闭合阶段扭矩尚未建立完成：经离合器传递的部分(含ISG补电/助力)按扭矩建立程度渐入
+      f.clutch = f.clutch*anim.torque;
+      if(m.eng==='smartcharge' || m.eng==='gcuassist') f.battIsg = f.battIsg*anim.torque;
+    }
   }
   return f;
 }
@@ -1251,11 +1284,21 @@ function animStep(dtReal){
   anim.angWheel   = wrapAng(anim.angWheel + wTM*dtAng*0.35);
   // 流动相位与SOC示意
   anim.flow = (anim.flow + dtReal*0.04) % 780;   // 780×0.6=468=虚线周期18/12/13的最小公倍数，回绕时虚线不跳
+  // 智能补电滞环：只在结合状态下按SOC门限切换；分离/非补电模式下复位
+  if(anim.phase==='engaged' && driveModes().eng==='smartcharge'){
+    if(anim.soc<=SMART_CHG_ON) anim.charging = true;
+    else if(anim.soc>=SMART_CHG_OFF) anim.charging = false;
+  } else if(anim.phase!=='closing'){
+    anim.charging = false;
+  }
   const f = flowState();
   let socRate; // %/ms，正=充电
   if((anim.phase==='released'||anim.phase==='releasing') && driveModes().rel==='rex'){
     // 增程发电：ISG转速高于TM时发电功率大于驱动功率，SOC上升；反之SOC缓慢下降
     socRate = anim.nISG > anim.nTM ? +0.0002 : -0.000075;
+  } else if(anim.phase==='engaged' && driveModes().eng==='smartcharge'){
+    // 智能补电：发动机工作在高效区，富余功率全部用于发电，补电速率较快；待机时TM不出力，SOC保持
+    socRate = anim.charging ? +0.0004 : 0;
   } else {
     const net = (f.battIsg + f.battTm);   // +放电 −充电
     socRate = -net*0.00015;
@@ -1608,6 +1651,10 @@ function updateAnimStatus(force){
   setStat('stTm',      state.tm_vehicle+' rpm');
   setStat('stD',       tgt.d.toFixed(0)+' rpm');
   setStat('stSoc',     anim.soc.toFixed(1)+' %');
+  setStat('stGcu',     flowState().gcu || '–');
+  // SOC滑块跟随仿真SOC（拖动时不覆盖用户输入）
+  if(!_socDragging){ socSlider.value = Math.round(anim.soc); }
+  setStat('soc_now_v', Math.round(anim.soc)+'%');
 }
 
 let _rafId = 0;
@@ -1657,6 +1704,14 @@ document.getElementById('animReleaseBtn').addEventListener('click', ()=>{
   if(anim.phase==='engaged'||anim.phase==='closing'||anim.phase==='adjusting'){ animSetPhase('releasing'); setActiveBtn('animReleaseBtn'); }
 });
 const SOC_DEFAULT = 80;
+const socSlider = document.getElementById('soc_now');
+let _socDragging = false;
+socSlider.addEventListener('pointerdown', ()=>{ _socDragging = true; });
+window.addEventListener('pointerup', ()=>{ _socDragging = false; });
+socSlider.addEventListener('input', ()=>{
+  anim.soc = parseFloat(socSlider.value);
+  updateAnimStatus(true);
+});
 document.getElementById('animResetBtn').addEventListener('click', ()=>{
   anim.trace = []; anim.tSim = 0; anim.soc = SOC_DEFAULT;
   els.isg_vehicle.value = DEFAULTS.isg_vehicle; els.tm_vehicle.value = DEFAULTS.tm_vehicle;

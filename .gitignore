@@ -1,0 +1,27 @@
+# ---- PyInstaller 打包产物（由 release/build.py 生成）----
+release/build_tmp/
+release/dist_exe/
+*.spec
+
+# app.html 由 build.py 用 app_template.html 渲染生成（替换 {{VERSION}}）
+release/app.html
+
+# ---- clutch_sim.py 运行时控制台输出 ----
+out.log
+err.log
+*.log
+!update.log
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+Desktop.ini
+~$*
